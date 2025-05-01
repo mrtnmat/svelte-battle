@@ -1,9 +1,8 @@
 <script>
-  import { createInitialState } from "../gameState.js";
+  import { createInitialState } from "../GameState.js";
   import PokemonCard from "../components/PokemonCard.svelte";
   import BattleLog from "../components/BattleLog.svelte";
-  import { NO_MOVE_SELECTED } from "../constants.js";
-  import { executeTurn, selectMove } from "../battleMechanics.js";
+  import { executeTurn, selectRandomMove } from "../BattleMechanics.js";
   import { changeScene, SCENES } from './SceneManager.svelte.js';
   
   // Gauntlet state keeps track of progress across battles
@@ -46,41 +45,27 @@
     gauntletState.log.push(`Battle #${gauntletState.defeatedCount + 1}: ${gauntletState.playerPokemon.name} vs ${enemyPokemon.name}`);
   }
   
-  // Computed property for move selection status
-  let bothMovesSelected = $derived(
-    battleState && 
-    battleState.pokemon1.selectedMove !== NO_MOVE_SELECTED &&
-    battleState.pokemon2.selectedMove !== NO_MOVE_SELECTED
-  );
-  
-  // Handle player move selection
+  // Handle player move selection and immediate turn execution
   function handleMoveSelect(moveIndex) {
-    if (!battleState) return;
-    
-    // Player selects move
-    const newState = selectMove({ ...battleState }, "pokemon1", moveIndex);
-    Object.assign(battleState, newState);
+    if (!battleState || battleState.battleOver) return;
     
     // Simple AI for enemy move selection
-    const enemyMoves = Object.keys(battleState.pokemon2.moves);
-    const availableMoves = enemyMoves.filter(move => 
-      battleState.pokemon2.moves[move].ppRemaining > 0
+    const enemyMoveIndex = selectRandomMove(battleState.pokemon2);
+    
+    if (!enemyMoveIndex) {
+      // No valid moves for enemy, rare case handling
+      battleState.log.push(`${battleState.pokemon2.name} has no moves with PP remaining!`);
+      return;
+    }
+    
+    // Execute turn immediately with player's selected move and enemy's random move
+    const newState = executeTurn(
+      { ...battleState },
+      moveIndex,
+      enemyMoveIndex
     );
     
-    if (availableMoves.length > 0) {
-      const randomMove = availableMoves[Math.floor(Math.random() * (availableMoves.length))];
-      const finalState = selectMove({ ...battleState }, "pokemon2", randomMove);
-      console.log(finalState)
-      Object.assign(battleState, finalState);
-    }
-  }
-  
-  // Handle turn execution
-  function handleExecuteTurn() {
-    if (!battleState) return;
-    
-    // Execute turn
-    const newState = executeTurn({ ...battleState });
+    // Update battle state
     Object.assign(battleState, newState);
     
     // Check if battle is over
@@ -117,36 +102,23 @@
   </div>
   
   {#if battleState}
-    <!-- Player Pokémon -->
+    <!-- Player Pokémon (showing clickable moves) -->
     <PokemonCard
       pokemon={battleState.pokemon1}
-      selectedMove={battleState.pokemon1.selectedMove}
+      selectedMove={null}
       color="blue"
       battleOver={battleState.battleOver}
       onMoveSelect={(moveIndex) => handleMoveSelect(moveIndex)}
     />
 
-    <!-- Enemy Pokémon -->
+    <!-- Enemy Pokémon (no clickable moves) -->
     <PokemonCard
       pokemon={battleState.pokemon2}
-      selectedMove={battleState.pokemon2.selectedMove}
+      selectedMove={null}
       color="red"
       battleOver={true}
       onMoveSelect={() => {}}
     />
-
-    <!-- Execute button -->
-    {#if !battleState.battleOver}
-      <button
-        class="w-full p-2 text-white rounded mb-6 {bothMovesSelected
-          ? 'bg-yellow-500 hover:bg-yellow-600'
-          : 'bg-gray-300 cursor-not-allowed'}"
-        disabled={!bothMovesSelected}
-        onclick={handleExecuteTurn}
-      >
-        Execute Turn
-      </button>
-    {/if}
     
     <!-- Current battle log -->
     <div class="mb-4">

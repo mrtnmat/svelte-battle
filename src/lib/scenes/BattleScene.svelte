@@ -2,29 +2,46 @@
   import { createInitialState } from "../GameState.js";
   import PokemonCard from "../components/PokemonCard.svelte";
   import BattleLog from "../components/BattleLog.svelte";
-  import { NO_MOVE_SELECTED } from "../constants.js";
-  import { executeTurn, selectMove } from "../BattleMechanics.js";
+  import { executeTurn } from "../BattleMechanics.js";
   import { changeScene, SCENES } from "./SceneManager.svelte.js";
 
+  // Main game state
   let gameState = $state(createInitialState());
+  
+  // UI state for selected moves (not part of game state)
+  let moveSelections = $state({
+    pokemon1: null,
+    pokemon2: null
+  });
 
+  // Computed property for move selection status
   let bothMovesSelected = $derived(
-    gameState.pokemon1.selectedMove !== NO_MOVE_SELECTED &&
-      gameState.pokemon2.selectedMove !== NO_MOVE_SELECTED,
+    moveSelections.pokemon1 !== null && 
+    moveSelections.pokemon2 !== null
   );
 
-  // Handle move selection
+  // Handle move selection (UI state only)
   function handleMoveSelect(pokemonId, moveIndex) {
-    // Update state directly with the result of selectMove
-    const newState = selectMove({ ...gameState }, pokemonId, moveIndex);
-    Object.assign(gameState, newState);
+    moveSelections[pokemonId] = moveIndex;
   }
 
   // Handle turn execution
   function handleExecuteTurn() {
-    // Update state directly with the result of executeTurn
-    const newState = executeTurn({ ...gameState });
+    // Execute turn with the selected moves
+    const newState = executeTurn(
+      { ...gameState }, 
+      moveSelections.pokemon1, 
+      moveSelections.pokemon2
+    );
+    
+    // Update game state with results
     Object.assign(gameState, newState);
+    
+    // Reset move selections for next turn if battle continues
+    if (!newState.battleOver) {
+      moveSelections.pokemon1 = null;
+      moveSelections.pokemon2 = null;
+    }
   }
 </script>
 
@@ -42,7 +59,7 @@
   <!-- Pokémon 1 (Pikachu) -->
   <PokemonCard
     pokemon={gameState.pokemon1}
-    selectedMove={gameState.pokemon1.selectedMove}
+    selectedMove={moveSelections.pokemon1}
     color="blue"
     battleOver={gameState.battleOver}
     onMoveSelect={(moveIndex) => handleMoveSelect("pokemon1", moveIndex)}
@@ -51,7 +68,7 @@
   <!-- Pokémon 2 (Bulbasaur) -->
   <PokemonCard
     pokemon={gameState.pokemon2}
-    selectedMove={gameState.pokemon2.selectedMove}
+    selectedMove={moveSelections.pokemon2}
     color="green"
     battleOver={gameState.battleOver}
     onMoveSelect={(moveIndex) => handleMoveSelect("pokemon2", moveIndex)}
@@ -78,6 +95,8 @@
       class="w-full p-2 bg-blue-500 hover:bg-blue-600 text-white rounded mt-4"
       onclick={() => {
         gameState = createInitialState();
+        moveSelections.pokemon1 = null;
+        moveSelections.pokemon2 = null;
       }}
     >
       New Battle

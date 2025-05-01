@@ -1,15 +1,13 @@
 <script>
-  import { NO_MOVE_SELECTED } from "../constants";
-
   let {
     pokemon,
-    selectedMove = NO_MOVE_SELECTED + "",
+    selectedMove = null,
     color = "blue",
     battleOver = false,
     onMoveSelect = (moveSlot) => {},
   } = $props();
 
-  // Using $derived instead of $:
+  // Using $derived to compute color classes
   let colorClasses = $derived(
     {
       blue: {
@@ -70,7 +68,7 @@
     </div>
   {/if}
 
-  {#if selectedMove !== NO_MOVE_SELECTED}
+  {#if selectedMove !== null}
     <div class="mt-2 text-center text-sm bg-green-100 p-1 rounded">
       Will use {pokemon.moves[selectedMove].name}
     </div>

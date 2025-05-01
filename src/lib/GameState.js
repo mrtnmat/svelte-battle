@@ -1,4 +1,3 @@
-import { NO_MOVE_SELECTED } from "./Constants";
 import { moveList } from "./Moves";
 
 export function createInitialState() {
@@ -20,8 +19,7 @@ export function createInitialState() {
           ...moveList["Thundershock"],
           ppRemaining: 20,
         },
-      },
-      selectedMove: NO_MOVE_SELECTED,
+      }
     },
     pokemon2: {
       name: "Bulbasaur",
@@ -40,8 +38,7 @@ export function createInitialState() {
           ...moveList["Vine Whip"],
           ppRemaining: 20,
         },
-      },
-      selectedMove: NO_MOVE_SELECTED,
+      }
     },
     turn: 1,
     log: ["Battle started! Select moves for both Pokémon."],

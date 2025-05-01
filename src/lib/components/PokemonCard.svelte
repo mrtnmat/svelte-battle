@@ -6,35 +6,42 @@
   export let color = "blue";
   export let battleOver = false;
   export let onMoveSelect = (moveSlot) => {};
-  
+
   $: colorClasses = {
     blue: {
       bg: "bg-blue-50",
       border: "border-blue-500",
       button: "bg-blue-500 hover:bg-blue-600",
-      bar: "bg-blue-500"
+      bar: "bg-blue-500",
     },
     green: {
       bg: "bg-green-50",
       border: "border-green-500",
       button: "bg-green-500 hover:bg-green-600",
-      bar: "bg-green-500"
-    }
+      bar: "bg-green-500",
+    },
   }[color];
 </script>
 
-<div class="p-3 rounded-md mb-4 {colorClasses.bg} {selectedMove !== null ? `border-2 ${colorClasses.border}` : ''}">
+<div
+  class="p-3 rounded-md mb-4 {colorClasses.bg} {selectedMove !== null
+    ? `border-2 ${colorClasses.border}`
+    : ''}"
+>
   <div class="flex justify-between">
     <span class="font-bold">{pokemon.name}</span>
     <span>{pokemon.hp}/{pokemon.maxHp} HP</span>
   </div>
-  
+
   <div class="w-full bg-gray-200 h-2 mt-1 rounded-full">
-    <div class="{colorClasses.bar} h-2 rounded-full" style="width: {(pokemon.hp / pokemon.maxHp) * 100}%"></div>
+    <div
+      class="{colorClasses.bar} h-2 rounded-full"
+      style="width: {(pokemon.hp / pokemon.maxHp) * 100}%"
+    ></div>
   </div>
-  
+
   <div class="text-sm mt-1">Speed: {pokemon.speed}</div>
-  
+
   {#if !battleOver}
     <div class="mt-2 grid grid-cols-2 gap-2">
       {#each Object.entries(pokemon.moves) as [ moveSlot, { name, pp, ppMax }]}
@@ -51,7 +58,7 @@
       {/each}
     </div>
   {/if}
-  
+
   {#if selectedMove !== NO_MOVE_SELECTED}
     <div class="mt-2 text-center text-sm bg-green-100 p-1 rounded">
       Will use {pokemon.moves[selectedMove].name}

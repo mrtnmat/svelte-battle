@@ -1,0 +1,1 @@
+export const NO_MOVE_SELECTED = 'NO_MOVE_SELECTED';

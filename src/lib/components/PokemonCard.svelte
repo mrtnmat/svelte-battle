@@ -1,9 +1,11 @@
 <script>
+  import { NO_MOVE_SELECTED } from "../constants";
+
   export let pokemon;
-  export let selectedMove = -1;
+  export let selectedMove = NO_MOVE_SELECTED;
   export let color = "blue";
   export let battleOver = false;
-  export let onMoveSelect = (index) => {};
+  export let onMoveSelect = (moveSlot) => {};
   
   $: colorClasses = {
     blue: {
@@ -35,19 +37,22 @@
   
   {#if !battleOver}
     <div class="mt-2 grid grid-cols-2 gap-2">
-      {#each pokemon.moves as move, index}
+      {#each Object.entries(pokemon.moves) as [ moveSlot, { name, pp, ppMax }]}
         <button
-          class="p-2 text-white rounded {colorClasses.button} {move.pp <= 0 ? 'opacity-50 cursor-not-allowed' : ''} 
-                {selectedMove === index ? 'ring-2 ring-yellow-400' : ''}"
-          on:click={() => onMoveSelect(index)}
-          disabled={move.pp <= 0}>
-          {move.name} ({move.pp}/{move.maxPp})
+          class="p-2 text-white rounded {colorClasses.button} {pp <= 0
+            ? 'opacity-50 cursor-not-allowed'
+            : ''} 
+                {selectedMove === moveSlot ? 'ring-2 ring-yellow-400' : ''}"
+          on:click={() => onMoveSelect(moveSlot)}
+          disabled={pp <= 0}
+        >
+          {name} ({pp}/{ppMax})
         </button>
       {/each}
     </div>
   {/if}
   
-  {#if selectedMove !== null}
+  {#if selectedMove !== NO_MOVE_SELECTED}
     <div class="mt-2 text-center text-sm bg-green-100 p-1 rounded">
       Will use {pokemon.moves[selectedMove].name}
     </div>

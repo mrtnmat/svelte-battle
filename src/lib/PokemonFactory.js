@@ -9,6 +9,7 @@ const pokemonBaseStats = {
     specialAttack: 50,
     specialDefense: 40,
     speed: 90,
+    types: ["Electric"],
     moves: ["Tackle", "Thundershock"]
   },
   Bulbasaur: {
@@ -18,6 +19,7 @@ const pokemonBaseStats = {
     specialAttack: 65,
     specialDefense: 65,
     speed: 45,
+    types: ["Grass", "Poison"],
     moves: ["Tackle", "Vine Whip"]
   },
   Charmander: {
@@ -27,6 +29,7 @@ const pokemonBaseStats = {
     specialAttack: 60,
     specialDefense: 50,
     speed: 65,
+    types: ["Fire"],
     moves: ["Scratch", "Ember"]
   },
   Squirtle: {
@@ -36,6 +39,7 @@ const pokemonBaseStats = {
     specialAttack: 50,
     specialDefense: 64,
     speed: 43,
+    types: ["Water"],
     moves: ["Tackle", "Water Gun"]
   }
 };
@@ -95,7 +99,8 @@ export function createPokemon(species, level) {
     specialAttack,
     specialDefense,
     speed,
-    moves
+    moves,
+    types: baseStats.types,
   };
 }
 

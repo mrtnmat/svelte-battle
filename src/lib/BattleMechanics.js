@@ -1,3 +1,5 @@
+import { typeEffectiveness } from './Moves.js'
+
 function applyDamage(pokemon, amount) {
   pokemon.hp = Math.max(0, pokemon.hp - amount)
 }
@@ -14,16 +16,34 @@ function calculateDamage({ attacker, defender, move }) {
   } else if (move.category === 'Special') {
     attackStat = attacker.specialAttack
     defenseStat = defender.specialDefense
-  } else {
-    // Status moves don't do damage, return 0
-    return 0
+  }
+  
+  // Calculate STAB (Same Type Attack Bonus)
+  let stabModifier = 1
+  if (attacker.types.includes(move.type)) {
+    stabModifier = 1.5
+  }
+  
+  // Calculate type effectiveness
+  let typeModifier = 1
+  if (typeEffectiveness[move.type]) {
+    defender.types.forEach(defenderType => {
+      if (typeEffectiveness[move.type][defenderType]) {
+        typeModifier *= typeEffectiveness[move.type][defenderType]
+      }
+    })
   }
   
   const attackRatio = attackStat / defenseStat
   const baseDamage = (levelDamage * move.power * attackRatio) / 50 + 2
   const randomFactor = (Math.random() * 15 + 85) / 100
-  const finalDamage = baseDamage * randomFactor
-  return Math.round(finalDamage)
+  const finalDamage = baseDamage * randomFactor * stabModifier * typeModifier
+  
+  return {
+    damage: Math.max(1, Math.round(finalDamage)),
+    stabModifier,
+    typeModifier
+  }
 }
 
 // Execute a turn with specific moves for each pokemon
@@ -93,24 +113,32 @@ export function executeTurn(state, pokemon1MoveIndex, pokemon2MoveIndex) {
     newState.log.push(`${attacker.name} used ${move.name}!`);
 
     // Calculate and apply damage
-    const damage = calculateDamage({ attacker, defender, move })
+    const damageResult = calculateDamage({ attacker, defender, move })
     
-    // For status moves that don't deal damage
-    if (damage === 0) {
-      newState.log.push(`It's a status move!`);
-      continue;
-    }
-    
-    applyDamage(defender, damage)
+    applyDamage(defender, damageResult.damage)
 
     // Log damage and used attack stat
     if (move.category === 'Physical') {
-      newState.log.push(`${move.name} is a Physical move! Used ${attacker.name}'s Attack (${attacker.attack}) against ${defender.name}'s Defense (${defender.defense})!`);
+      newState.log.push(`${move.name} is a ${move.type}-type Physical move! Used ${attacker.name}'s Attack (${attacker.attack}) against ${defender.name}'s Defense (${defender.defense})!`);
     } else if (move.category === 'Special') {
-      newState.log.push(`${move.name} is a Special move! Used ${attacker.name}'s Special Attack (${attacker.specialAttack}) against ${defender.name}'s Special Defense (${defender.specialDefense})!`);
+      newState.log.push(`${move.name} is a ${move.type}-type Special move! Used ${attacker.name}'s Special Attack (${attacker.specialAttack}) against ${defender.name}'s Special Defense (${defender.specialDefense})!`);
+    }
+    
+    // Log STAB bonus
+    if (damageResult.stabModifier > 1) {
+      newState.log.push(`It's ${attacker.name}'s same type! Attack power increased by 50%!`);
+    }
+    
+    // Log type effectiveness
+    if (damageResult.typeModifier > 1) {
+      newState.log.push(`It's super effective! (x${damageResult.typeModifier})`);
+    } else if (damageResult.typeModifier < 1 && damageResult.typeModifier > 0) {
+      newState.log.push(`It's not very effective... (x${damageResult.typeModifier})`);
+    } else if (damageResult.typeModifier === 0) {
+      newState.log.push(`It doesn't affect ${defender.name}...`);
     }
 
-    newState.log.push(`${defender.name} took ${damage} damage!`);
+    newState.log.push(`${defender.name} took ${damageResult.damage} damage!`);
 
     // Check if defender fainted
     if (defender.hp <= 0) {

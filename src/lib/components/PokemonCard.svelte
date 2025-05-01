@@ -33,9 +33,17 @@
 </script>
 
 <div class="p-3 rounded-md mb-4 {colorClasses.bg}">
-  <div class="flex justify-between">
+  <div class="flex justify-between items-center">
     <span class="font-bold">{pokemon.name}</span>
     <span>{pokemon.hp}/{pokemon.maxHp} HP</span>
+  </div>
+  
+  <div class="flex flex-wrap gap-1 mt-1 mb-1">
+    {#each pokemon.types as type}
+      <span class="text-xs px-2 py-0.5 rounded-full bg-gray-200 text-gray-800 font-semibold">
+        {type}
+      </span>
+    {/each}
   </div>
 
   <div class="w-full bg-gray-200 h-2 mt-1 rounded-full">
@@ -67,7 +75,7 @@
         >
           <div>{move.name}</div>
           <div class="flex justify-between text-xs">
-            <span>{move.category}</span>
+            <span>{move.type} / {move.category}</span>
             <span>({move.ppRemaining}/{move.pp})</span>
           </div>
         </button>

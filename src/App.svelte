@@ -29,6 +29,15 @@
     onMoveSelect={(moveIndex) => handleMoveSelect("pokemon1", moveIndex)}
   />
 
+  <!-- Pokémon 2 (Bulbasaur) -->
+  <PokemonCard
+    pokemon={gameState.pokemon2}
+    selectedMove={gameState.pokemon2.selectedMove}
+    color="green"
+    battleOver={gameState.battleOver}
+    onMoveSelect={(moveIndex) => handleMoveSelect("pokemon2", moveIndex)}
+  />
+
   <!-- Battle log -->
   <BattleLog messages={gameState.log} />
 </main>

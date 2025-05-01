@@ -1,14 +1,9 @@
 <script>
-  import {
-    createInitialState,
-    selectMove,
-    executeTurn,
-  } from "./lib/gameState.js";
+  import { createInitialState } from "./lib/gameState.js";
   import PokemonCard from "./lib/components/PokemonCard.svelte";
   import BattleLog from "./lib/components/BattleLog.svelte";
-  import { NO_MOVE_SELECTED } from "./lib/constants.js";
-
-  // Initialize game state (mutable)
+  import { NO_MOVE_SELECTED } from "./lib/constants.js"; // Initialize game state (mutable)
+  import { executeTurn, selectMove } from "./lib/battleMechanics.js";
   let gameState = createInitialState();
 
   // Computed properties

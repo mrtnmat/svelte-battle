@@ -1,6 +1,7 @@
 <script>
   import { createInitialState, selectMove } from "./lib/gameState.js";
   import PokemonCard from "./lib/components/PokemonCard.svelte";
+  import BattleLog from "./lib/components/BattleLog.svelte";
   import { NO_MOVE_SELECTED } from "./lib/constants.js";
 
   // Initialize game state (mutable)
@@ -27,6 +28,9 @@
     battleOver={gameState.battleOver}
     onMoveSelect={(moveIndex) => handleMoveSelect("pokemon1", moveIndex)}
   />
+
+  <!-- Battle log -->
+  <BattleLog messages={gameState.log} />
 </main>
 
 <style>

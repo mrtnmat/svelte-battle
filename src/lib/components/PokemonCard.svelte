@@ -44,16 +44,16 @@
 
   {#if !battleOver}
     <div class="mt-2 grid grid-cols-2 gap-2">
-      {#each Object.entries(pokemon.moves) as [ moveSlot, { name, pp, ppMax }]}
+      {#each Object.entries(pokemon.moves) as [ moveSlot, { name, ppRemaining, pp }]}
         <button
-          class="p-2 text-white rounded {colorClasses.button} {pp <= 0
+          class="p-2 text-white rounded {colorClasses.button} {ppRemaining <= 0
             ? 'opacity-50 cursor-not-allowed'
             : ''} 
                 {selectedMove === moveSlot ? 'ring-2 ring-yellow-400' : ''}"
           on:click={() => onMoveSelect(moveSlot)}
-          disabled={pp <= 0}
+          disabled={ppRemaining <= 0}
         >
-          {name} ({pp}/{ppMax})
+          {name} ({ppRemaining}/{pp})
         </button>
       {/each}
     </div>

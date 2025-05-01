@@ -1,4 +1,5 @@
 import { NO_MOVE_SELECTED } from "./constants";
+import { moveList } from "./moves";
 
 export function createInitialState() {
   return {
@@ -9,16 +10,12 @@ export function createInitialState() {
       speed: 90,
       moves: {
         'Move 1': {
-          name: 'Tackle',
-          power: 10,
-          pp: 10,
-          ppMax: 10,
+          ...moveList.Tackle,
+          ppRemaining: 10,
         },
         'Move 2': {
-          name: 'Thundershock',
-          power: 10,
-          pp: 35,
-          ppMax: 35,
+          ...moveList.Thundershock,
+          ppRemaining: 20,
         },
       },
       selectedMove: NO_MOVE_SELECTED,
@@ -30,16 +27,12 @@ export function createInitialState() {
       speed: 45,
       moves: {
         'Move 1': {
-          name: 'Tackle',
-          power: 10,
-          pp: 10,
-          ppMax: 10,
+          ...moveList.Tackle,
+          ppRemaining: 20,
         },
         'Move 2': {
-          name: 'Vine Whip',
-          power: 10,
-          pp: 35,
-          ppMax: 35,
+          ...moveList.Tackle,
+          ppRemaining: 20,
         },
       },
       selectedMove: NO_MOVE_SELECTED,
@@ -89,7 +82,7 @@ export function executeTurn(state) {
   const pokemon1MoveIndex = state.pokemon1.selectedMove;
   const pokemon2MoveIndex = state.pokemon2.selectedMove;
 
-  if (pokemon1MoveIndex === null || pokemon2MoveIndex === null) {
+  if (pokemon1MoveIndex === NO_MOVE_SELECTED || pokemon2MoveIndex === NO_MOVE_SELECTED) {
     state.log.push("Cannot execute turn: moves not selected for both Pokémon.");
     return state;
   }
@@ -125,7 +118,7 @@ export function executeTurn(state) {
     const move = attacker.moves[moveIndex];
 
     // Reduce PP
-    move.pp--;
+    move.ppRemaining--;
 
     // Log the move
     state.log.push(`${attacker.name} used ${move.name}!`);

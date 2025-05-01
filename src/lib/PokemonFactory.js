@@ -6,6 +6,8 @@ const pokemonBaseStats = {
     hp: 35,
     attack: 55,
     defense: 40,
+    specialAttack: 50,
+    specialDefense: 40,
     speed: 90,
     moves: ["Tackle", "Thundershock"]
   },
@@ -13,6 +15,8 @@ const pokemonBaseStats = {
     hp: 45,
     attack: 49,
     defense: 49,
+    specialAttack: 65,
+    specialDefense: 65,
     speed: 45,
     moves: ["Tackle", "Vine Whip"]
   },
@@ -20,6 +24,8 @@ const pokemonBaseStats = {
     hp: 39,
     attack: 52,
     defense: 43,
+    specialAttack: 60,
+    specialDefense: 50,
     speed: 65,
     moves: ["Scratch", "Ember"]
   },
@@ -27,12 +33,12 @@ const pokemonBaseStats = {
     hp: 44,
     attack: 48,
     defense: 65,
+    specialAttack: 50,
+    specialDefense: 64,
     speed: 43,
     moves: ["Tackle", "Water Gun"]
   }
 };
-
-// Add more moves to the moveList in the Moves.js file
 
 // Calculate the stat value based on base stat and level
 function calculateStat(baseStat, level, isHP = false) {
@@ -58,6 +64,8 @@ export function createPokemon(species, level) {
   const hp = calculateStat(baseStats.hp, level, true);
   const attack = calculateStat(baseStats.attack, level);
   const defense = calculateStat(baseStats.defense, level);
+  const specialAttack = calculateStat(baseStats.specialAttack, level);
+  const specialDefense = calculateStat(baseStats.specialDefense, level);
   const speed = calculateStat(baseStats.speed, level);
   
   // Create moves object with PP
@@ -84,6 +92,8 @@ export function createPokemon(species, level) {
     maxHp: hp,
     attack,
     defense,
+    specialAttack,
+    specialDefense,
     speed,
     moves
   };

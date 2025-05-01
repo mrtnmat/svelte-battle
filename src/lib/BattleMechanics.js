@@ -2,10 +2,25 @@ function applyDamage(pokemon, amount) {
   pokemon.hp = Math.max(0, pokemon.hp - amount)
 }
 
-function calculateDamage({ attacker, defender, movePower }) {
+function calculateDamage({ attacker, defender, move }) {
   const levelDamage = ((attacker.level * 2 / 5) + 2)
-  const attackRatio = attacker.attack / defender.defense
-  const baseDamage = (levelDamage * movePower * attackRatio) / 50 + 2
+  
+  // Use the correct stats based on move category
+  let attackStat, defenseStat
+  
+  if (move.category === 'Physical') {
+    attackStat = attacker.attack
+    defenseStat = defender.defense
+  } else if (move.category === 'Special') {
+    attackStat = attacker.specialAttack
+    defenseStat = defender.specialDefense
+  } else {
+    // Status moves don't do damage, return 0
+    return 0
+  }
+  
+  const attackRatio = attackStat / defenseStat
+  const baseDamage = (levelDamage * move.power * attackRatio) / 50 + 2
   const randomFactor = (Math.random() * 15 + 85) / 100
   const finalDamage = baseDamage * randomFactor
   return Math.round(finalDamage)
@@ -70,7 +85,6 @@ export function executeTurn(state, pokemon1MoveIndex, pokemon2MoveIndex) {
 
     // Get move details
     const move = attacker.moves[moveIndex];
-    const movePower = move.power
 
     // Reduce PP
     move.ppRemaining--;
@@ -79,10 +93,23 @@ export function executeTurn(state, pokemon1MoveIndex, pokemon2MoveIndex) {
     newState.log.push(`${attacker.name} used ${move.name}!`);
 
     // Calculate and apply damage
-    const damage = calculateDamage({ attacker, defender, movePower })
+    const damage = calculateDamage({ attacker, defender, move })
+    
+    // For status moves that don't deal damage
+    if (damage === 0) {
+      newState.log.push(`It's a status move!`);
+      continue;
+    }
+    
     applyDamage(defender, damage)
 
-    // Log damage
+    // Log damage and used attack stat
+    if (move.category === 'Physical') {
+      newState.log.push(`${move.name} is a Physical move! Used ${attacker.name}'s Attack (${attacker.attack}) against ${defender.name}'s Defense (${defender.defense})!`);
+    } else if (move.category === 'Special') {
+      newState.log.push(`${move.name} is a Special move! Used ${attacker.name}'s Special Attack (${attacker.specialAttack}) against ${defender.name}'s Special Defense (${defender.specialDefense})!`);
+    }
+
     newState.log.push(`${defender.name} took ${damage} damage!`);
 
     // Check if defender fainted

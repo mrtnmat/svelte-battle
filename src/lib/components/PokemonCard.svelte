@@ -45,20 +45,31 @@
     ></div>
   </div>
 
-  <div class="text-sm mt-1">Speed: {pokemon.speed}</div>
+  <div class="grid grid-cols-2 gap-1 text-sm mt-1">
+    <div>Attack: {pokemon.attack}</div>
+    <div>Defense: {pokemon.defense}</div>
+    <div>Sp.Atk: {pokemon.specialAttack}</div>
+    <div>Sp.Def: {pokemon.specialDefense}</div>
+    <div>Speed: {pokemon.speed}</div>
+    <div>Level: {pokemon.level}</div>
+  </div>
 
   {#if !battleOver}
     <div class="mt-2 grid grid-cols-2 gap-2">
-      {#each Object.entries(pokemon.moves) as [moveSlot, { name, ppRemaining, pp }]}
+      {#each Object.entries(pokemon.moves) as [moveSlot, move]}
         <button
-          class="p-2 text-white rounded {colorClasses.button} {ppRemaining <= 0
+          class="p-2 text-white rounded {colorClasses.button} {move.ppRemaining <= 0
             ? 'opacity-50 cursor-not-allowed'
             : ''} 
                 {highlightedMove === moveSlot ? 'ring-2 ring-yellow-400' : ''}"
           onclick={() => onMoveSelect(moveSlot)}
-          disabled={ppRemaining <= 0}
+          disabled={move.ppRemaining <= 0}
         >
-          {name} ({ppRemaining}/{pp})
+          <div>{move.name}</div>
+          <div class="flex justify-between text-xs">
+            <span>{move.category}</span>
+            <span>({move.ppRemaining}/{move.pp})</span>
+          </div>
         </button>
       {/each}
     </div>

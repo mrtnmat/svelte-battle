@@ -1,50 +1,9 @@
-import { typeEffectiveness } from './Moves.js'
+import { calculateDamage } from './functions/CalculateDamage.js';
 
 function applyDamage(pokemon, amount) {
   pokemon.hp = Math.max(0, pokemon.hp - amount)
 }
 
-function calculateDamage({ attacker, defender, move }) {
-  const levelDamage = ((attacker.level * 2 / 5) + 2)
-  
-  // Use the correct stats based on move category
-  let attackStat, defenseStat
-  
-  if (move.category === 'Physical') {
-    attackStat = attacker.attack
-    defenseStat = defender.defense
-  } else if (move.category === 'Special') {
-    attackStat = attacker.specialAttack
-    defenseStat = defender.specialDefense
-  }
-  
-  // Calculate STAB (Same Type Attack Bonus)
-  let stabModifier = 1
-  if (attacker.types.includes(move.type)) {
-    stabModifier = 1.5
-  }
-  
-  // Calculate type effectiveness
-  let typeModifier = 1
-  if (typeEffectiveness[move.type]) {
-    defender.types.forEach(defenderType => {
-      if (typeEffectiveness[move.type][defenderType]) {
-        typeModifier *= typeEffectiveness[move.type][defenderType]
-      }
-    })
-  }
-  
-  const attackRatio = attackStat / defenseStat
-  const baseDamage = (levelDamage * move.power * attackRatio) / 50 + 2
-  const randomFactor = (Math.random() * 15 + 85) / 100
-  const finalDamage = baseDamage * randomFactor * stabModifier * typeModifier
-  
-  return {
-    damage: Math.max(1, Math.round(finalDamage)),
-    stabModifier,
-    typeModifier
-  }
-}
 
 // Execute a turn with specific moves for each pokemon
 export function executeTurn(state, pokemon1MoveIndex, pokemon2MoveIndex) {
@@ -115,7 +74,7 @@ export function executeTurn(state, pokemon1MoveIndex, pokemon2MoveIndex) {
     // Calculate and apply damage
     const damageResult = calculateDamage({ attacker, defender, move })
     
-    applyDamage(defender, damageResult.damage)
+    applyDamage(defender, damageResult)
 
     // Log damage and used attack stat
     if (move.category === 'Physical') {
@@ -124,11 +83,14 @@ export function executeTurn(state, pokemon1MoveIndex, pokemon2MoveIndex) {
       newState.log.push(`${move.name} is a ${move.type}-type Special move! Used ${attacker.name}'s Special Attack (${attacker.specialAttack}) against ${defender.name}'s Special Defense (${defender.specialDefense})!`);
     }
     
+    /*
     // Log STAB bonus
     if (damageResult.stabModifier > 1) {
       newState.log.push(`It's ${attacker.name}'s same type! Attack power increased by 50%!`);
     }
+    */
     
+    /*
     // Log type effectiveness
     if (damageResult.typeModifier > 1) {
       newState.log.push(`It's super effective! (x${damageResult.typeModifier})`);
@@ -137,8 +99,9 @@ export function executeTurn(state, pokemon1MoveIndex, pokemon2MoveIndex) {
     } else if (damageResult.typeModifier === 0) {
       newState.log.push(`It doesn't affect ${defender.name}...`);
     }
+    */
 
-    newState.log.push(`${defender.name} took ${damageResult.damage} damage!`);
+    newState.log.push(`${defender.name} took ${damageResult} damage!`);
 
     // Check if defender fainted
     if (defender.hp <= 0) {

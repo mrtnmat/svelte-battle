@@ -1,8 +1,15 @@
 <script>
   import { createInitialState, selectMove } from "./lib/gameState.js";
   import PokemonCard from "./lib/components/PokemonCard.svelte";
+  import { NO_MOVE_SELECTED } from "./lib/constants.js";
 
+  // Initialize game state (mutable)
   let gameState = createInitialState();
+
+  // Computed properties
+  $: bothMovesSelected =
+    gameState.pokemon1.selectedMove !== NO_MOVE_SELECTED &&
+    gameState.pokemon2.selectedMove !== NO_MOVE_SELECTED;
 
   // Handle move selection
   function handleMoveSelect(pokemonId, moveIndex) {

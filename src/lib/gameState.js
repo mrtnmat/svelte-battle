@@ -1,23 +1,23 @@
-import { NO_MOVE_SELECTED } from "./constants";
-import { moveList } from "./moves";
+import { NO_MOVE_SELECTED } from "./Constants";
+import { moveList } from "./Moves";
 
 export function createInitialState() {
   return {
     pokemon1: {
       name: "Pikachu",
-      level: 50,
-      hp: 95,
-      maxHp: 95,
-      attack: 60,
-      defense: 45,
-      speed: 95,
+      level: 15,
+      hp: 35,
+      maxHp: 35,
+      attack: 21,
+      defense: 17,
+      speed: 32,
       moves: {
         'Move 1': {
-          ...moveList.Tackle,
+          ...moveList["Tackle"],
           ppRemaining: 10,
         },
         'Move 2': {
-          ...moveList.Thundershock,
+          ...moveList["Thundershock"],
           ppRemaining: 20,
         },
       },
@@ -25,19 +25,19 @@ export function createInitialState() {
     },
     pokemon2: {
       name: "Bulbasaur",
-      level: 50,
-      hp: 105,
-      maxHp: 105,
-      attack: 54,
-      defense: 54,
-      speed: 50,
+      level: 5,
+      hp: 19,
+      maxHp: 19,
+      attack: 9,
+      defense: 9,
+      speed: 9,
       moves: {
         'Move 1': {
-          ...moveList.Tackle,
+          ...moveList["Tackle"],
           ppRemaining: 20,
         },
         'Move 2': {
-          ...moveList.Tackle,
+          ...moveList["Vine Whip"],
           ppRemaining: 20,
         },
       },

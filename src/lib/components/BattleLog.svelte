@@ -1,12 +1,10 @@
 <script>
-  import { onMount, afterUpdate } from 'svelte';
-  
-  export let messages = [];
+  let {messages = []} = $props();
   
   let logElement;
   
-  // Scroll to bottom when messages change
-  afterUpdate(() => {
+  // Using $effect instead of afterUpdate
+  $effect(() => {
     if (logElement) {
       logElement.scrollTop = logElement.scrollHeight;
     }

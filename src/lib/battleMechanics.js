@@ -1,4 +1,4 @@
-import { NO_MOVE_SELECTED } from "./constants"
+import { NO_MOVE_SELECTED } from "./Constants"
 
 function applyDamage(pokemon, amount) {
   pokemon.hp = Math.max(0, pokemon.hp - amount)

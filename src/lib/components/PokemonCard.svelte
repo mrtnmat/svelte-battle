@@ -1,26 +1,37 @@
 <script>
   import { NO_MOVE_SELECTED } from "../constants";
 
-  export let pokemon;
-  export let selectedMove = NO_MOVE_SELECTED;
-  export let color = "blue";
-  export let battleOver = false;
-  export let onMoveSelect = (moveSlot) => {};
+  let {
+    pokemon,
+    selectedMove = NO_MOVE_SELECTED + "",
+    color = "blue",
+    battleOver = false,
+    onMoveSelect = (moveSlot) => {},
+  } = $props();
 
-  $: colorClasses = {
-    blue: {
-      bg: "bg-blue-50",
-      border: "border-blue-500",
-      button: "bg-blue-500 hover:bg-blue-600",
-      bar: "bg-blue-500",
-    },
-    green: {
-      bg: "bg-green-50",
-      border: "border-green-500",
-      button: "bg-green-500 hover:bg-green-600",
-      bar: "bg-green-500",
-    },
-  }[color];
+  // Using $derived instead of $:
+  let colorClasses = $derived(
+    {
+      blue: {
+        bg: "bg-blue-50",
+        border: "border-blue-500",
+        button: "bg-blue-500 hover:bg-blue-600",
+        bar: "bg-blue-500",
+      },
+      green: {
+        bg: "bg-green-50",
+        border: "border-green-500",
+        button: "bg-green-500 hover:bg-green-600",
+        bar: "bg-green-500",
+      },
+      red: {
+        bg: "bg-red-50",
+        border: "border-red-500",
+        button: "bg-red-500 hover:bg-red-600",
+        bar: "bg-red-500",
+      },
+    }[color],
+  );
 </script>
 
 <div
@@ -44,13 +55,13 @@
 
   {#if !battleOver}
     <div class="mt-2 grid grid-cols-2 gap-2">
-      {#each Object.entries(pokemon.moves) as [ moveSlot, { name, ppRemaining, pp }]}
+      {#each Object.entries(pokemon.moves) as [moveSlot, { name, ppRemaining, pp }]}
         <button
           class="p-2 text-white rounded {colorClasses.button} {ppRemaining <= 0
             ? 'opacity-50 cursor-not-allowed'
             : ''} 
                 {selectedMove === moveSlot ? 'ring-2 ring-yellow-400' : ''}"
-          on:click={() => onMoveSelect(moveSlot)}
+          onclick={() => onMoveSelect(moveSlot)}
           disabled={ppRemaining <= 0}
         >
           {name} ({ppRemaining}/{pp})

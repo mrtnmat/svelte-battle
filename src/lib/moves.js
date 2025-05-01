@@ -12,4 +12,5 @@ function newMove({name, power, pp}) {
 export const moveList = {
     'Tackle': newMove({name: 'Tackle', power: 40, pp:35}),
     'Thundershock': newMove({name: 'Thundershock', power: 40, pp:30}),
+    'Vine Whip': newMove({name: 'Vine Whip', power: 45, pp:25}),
 }

@@ -1,5 +1,9 @@
 <script>
-  import { createInitialState, selectMove, executeTurn } from "./lib/gameState.js";
+  import {
+    createInitialState,
+    selectMove,
+    executeTurn,
+  } from "./lib/gameState.js";
   import PokemonCard from "./lib/components/PokemonCard.svelte";
   import BattleLog from "./lib/components/BattleLog.svelte";
   import { NO_MOVE_SELECTED } from "./lib/constants.js";
@@ -26,39 +30,41 @@
 </script>
 
 <main>
-  <!-- Pokémon 1 (Pikachu) -->
-  <PokemonCard
-    pokemon={gameState.pokemon1}
-    selectedMove={gameState.pokemon1.selectedMove}
-    color="blue"
-    battleOver={gameState.battleOver}
-    onMoveSelect={(moveIndex) => handleMoveSelect("pokemon1", moveIndex)}
-  />
+  <div class="max-w-md mx-auto bg-white p-4 rounded-lg shadow-md">
+    <!-- Pokémon 1 (Pikachu) -->
+    <PokemonCard
+      pokemon={gameState.pokemon1}
+      selectedMove={gameState.pokemon1.selectedMove}
+      color="blue"
+      battleOver={gameState.battleOver}
+      onMoveSelect={(moveIndex) => handleMoveSelect("pokemon1", moveIndex)}
+    />
 
-  <!-- Pokémon 2 (Bulbasaur) -->
-  <PokemonCard
-    pokemon={gameState.pokemon2}
-    selectedMove={gameState.pokemon2.selectedMove}
-    color="green"
-    battleOver={gameState.battleOver}
-    onMoveSelect={(moveIndex) => handleMoveSelect("pokemon2", moveIndex)}
-  />
+    <!-- Pokémon 2 (Bulbasaur) -->
+    <PokemonCard
+      pokemon={gameState.pokemon2}
+      selectedMove={gameState.pokemon2.selectedMove}
+      color="green"
+      battleOver={gameState.battleOver}
+      onMoveSelect={(moveIndex) => handleMoveSelect("pokemon2", moveIndex)}
+    />
 
-  <!-- Execute button -->
-  {#if !gameState.battleOver}
-    <button
-      class="w-full p-2 text-white rounded mb-6 {bothMovesSelected
-        ? 'bg-yellow-500 hover:bg-yellow-600'
-        : 'bg-gray-300 cursor-not-allowed'}"
-      disabled={!bothMovesSelected}
-      on:click={handleExecuteTurn}
-    >
-      Execute Turn
-    </button>
-  {/if}
+    <!-- Execute button -->
+    {#if !gameState.battleOver}
+      <button
+        class="w-full p-2 text-white rounded mb-6 {bothMovesSelected
+          ? 'bg-yellow-500 hover:bg-yellow-600'
+          : 'bg-gray-300 cursor-not-allowed'}"
+        disabled={!bothMovesSelected}
+        on:click={handleExecuteTurn}
+      >
+        Execute Turn
+      </button>
+    {/if}
 
-  <!-- Battle log -->
-  <BattleLog messages={gameState.log} />
+    <!-- Battle log -->
+    <BattleLog messages={gameState.log} />
+  </div>
 </main>
 
 <style>

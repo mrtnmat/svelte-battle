@@ -34,6 +34,12 @@
   // Handle move selection (UI state only)
   function handleMoveSelect(pokemonId, moveIndex) {
     moveSelections[pokemonId] = moveIndex;
+    
+    // If both moves are selected, automatically execute the turn
+    if (pokemonId === "pokemon1" && moveSelections.pokemon2 !== null ||
+        pokemonId === "pokemon2" && moveSelections.pokemon1 !== null) {
+      handleExecuteTurn();
+    }
   }
 
   // Handle turn execution
@@ -70,7 +76,7 @@
   <!-- Pokémon 1 (Pikachu) -->
   <PokemonCard
     pokemon={gameState.pokemon1}
-    selectedMove={moveSelections.pokemon1}
+    highlightedMove={moveSelections.pokemon1}
     color="blue"
     battleOver={gameState.battleOver}
     onMoveSelect={(moveIndex) => handleMoveSelect("pokemon1", moveIndex)}
@@ -79,24 +85,13 @@
   <!-- Pokémon 2 (Bulbasaur) -->
   <PokemonCard
     pokemon={gameState.pokemon2}
-    selectedMove={moveSelections.pokemon2}
+    highlightedMove={moveSelections.pokemon2}
     color="green"
     battleOver={gameState.battleOver}
     onMoveSelect={(moveIndex) => handleMoveSelect("pokemon2", moveIndex)}
   />
 
-  <!-- Execute button -->
-  {#if !gameState.battleOver}
-    <button
-      class="w-full p-2 text-white rounded mb-6 {bothMovesSelected
-        ? 'bg-yellow-500 hover:bg-yellow-600'
-        : 'bg-gray-300 cursor-not-allowed'}"
-      disabled={!bothMovesSelected}
-      onclick={handleExecuteTurn}
-    >
-      Execute Turn
-    </button>
-  {/if}
+  <!-- Execute button removed as it's now automatic -->
 
   <!-- Battle log -->
   <BattleLog messages={gameState.log} />

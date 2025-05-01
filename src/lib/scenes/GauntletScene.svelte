@@ -110,7 +110,6 @@
     <!-- Player Pokémon (showing clickable moves) -->
     <PokemonCard
       pokemon={battleState.pokemon1}
-      selectedMove={null} 
       color="blue"
       battleOver={battleState.battleOver}
       onMoveSelect={(moveIndex) => handleMoveSelect(moveIndex)}
@@ -119,7 +118,6 @@
     <!-- Enemy Pokémon (no clickable moves) -->
     <PokemonCard
       pokemon={battleState.pokemon2}
-      selectedMove={null}
       color="red"
       battleOver={true}
       onMoveSelect={() => {}}

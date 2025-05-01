@@ -1,10 +1,10 @@
 <script>
   let {
     pokemon,
-    selectedMove = null,
     color = "blue",
     battleOver = false,
     onMoveSelect = (moveSlot) => {},
+    highlightedMove = null,
   } = $props();
 
   // Using $derived to compute color classes
@@ -32,11 +32,7 @@
   );
 </script>
 
-<div
-  class="p-3 rounded-md mb-4 {colorClasses.bg} {selectedMove !== null
-    ? `border-2 ${colorClasses.border}`
-    : ''}"
->
+<div class="p-3 rounded-md mb-4 {colorClasses.bg}">
   <div class="flex justify-between">
     <span class="font-bold">{pokemon.name}</span>
     <span>{pokemon.hp}/{pokemon.maxHp} HP</span>
@@ -58,7 +54,7 @@
           class="p-2 text-white rounded {colorClasses.button} {ppRemaining <= 0
             ? 'opacity-50 cursor-not-allowed'
             : ''} 
-                {selectedMove === moveSlot ? 'ring-2 ring-yellow-400' : ''}"
+                {highlightedMove === moveSlot ? 'ring-2 ring-yellow-400' : ''}"
           onclick={() => onMoveSelect(moveSlot)}
           disabled={ppRemaining <= 0}
         >
@@ -68,9 +64,4 @@
     </div>
   {/if}
 
-  {#if selectedMove !== null}
-    <div class="mt-2 text-center text-sm bg-green-100 p-1 rounded">
-      Will use {pokemon.moves[selectedMove].name}
-    </div>
-  {/if}
 </div>

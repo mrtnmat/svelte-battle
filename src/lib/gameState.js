@@ -5,9 +5,12 @@ export function createInitialState() {
   return {
     pokemon1: {
       name: "Pikachu",
-      hp: 100,
-      maxHp: 100,
-      speed: 90,
+      level: 50,
+      hp: 95,
+      maxHp: 95,
+      attack: 60,
+      defense: 45,
+      speed: 95,
       moves: {
         'Move 1': {
           ...moveList.Tackle,
@@ -22,9 +25,12 @@ export function createInitialState() {
     },
     pokemon2: {
       name: "Bulbasaur",
-      hp: 120,
-      maxHp: 120,
-      speed: 45,
+      level: 50,
+      hp: 105,
+      maxHp: 105,
+      attack: 54,
+      defense: 54,
+      speed: 50,
       moves: {
         'Move 1': {
           ...moveList.Tackle,
@@ -67,9 +73,13 @@ function applyDamage(pokemon, amount) {
   pokemon.hp = Math.max(0, pokemon.hp - amount)
 }
 
-function calculateDamage(power) {
-  const damage = power + Math.floor(Math.random() * 5)
-  return damage
+function calculateDamage({ attacker, defender, movePower }) {
+  const levelDamage = ((attacker.level * 2 / 5) + 2)
+  const attackRatio = attacker.attack / defender.defense
+  const baseDamage = (levelDamage * movePower * attackRatio) / 50 + 2
+  const randomFactor = (Math.random() * 15 + 85) / 100
+  const finalDamage = baseDamage * randomFactor
+  return Math.round(finalDamage)
 }
 
 export function executeTurn(state) {
@@ -116,6 +126,7 @@ export function executeTurn(state) {
     // Get move details
     const moveIndex = attacker.selectedMove;
     const move = attacker.moves[moveIndex];
+    const movePower = move.power
 
     // Reduce PP
     move.ppRemaining--;
@@ -124,7 +135,7 @@ export function executeTurn(state) {
     state.log.push(`${attacker.name} used ${move.name}!`);
 
     // Calculate and apply damage
-    const damage = calculateDamage(move.power)
+    const damage = calculateDamage({ attacker, defender, movePower })
     applyDamage(defender, damage)
 
     // Log damage

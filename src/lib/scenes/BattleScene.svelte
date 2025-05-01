@@ -1,5 +1,5 @@
 <script>
-  import { moveList } from "../Moves.js";
+  import { createPokemon } from "../PokemonFactory.js";
   import PokemonCard from "../components/PokemonCard.svelte";
   import BattleLog from "../components/BattleLog.svelte";
   import { executeTurn } from "../BattleMechanics.js";
@@ -8,44 +8,8 @@
   // Create initial state function
   function createInitialState() {
     return {
-      pokemon1: {
-        name: "Pikachu",
-        level: 15,
-        hp: 35,
-        maxHp: 35,
-        attack: 21,
-        defense: 17,
-        speed: 32,
-        moves: {
-          'Move 1': {
-            ...moveList["Tackle"],
-            ppRemaining: 10,
-          },
-          'Move 2': {
-            ...moveList["Thundershock"],
-            ppRemaining: 20,
-          },
-        }
-      },
-      pokemon2: {
-        name: "Bulbasaur",
-        level: 5,
-        hp: 19,
-        maxHp: 19,
-        attack: 9,
-        defense: 9,
-        speed: 9,
-        moves: {
-          'Move 1': {
-            ...moveList["Tackle"],
-            ppRemaining: 20,
-          },
-          'Move 2': {
-            ...moveList["Vine Whip"],
-            ppRemaining: 20,
-          },
-        }
-      },
+      pokemon1: createPokemon("Pikachu", 15),
+      pokemon2: createPokemon("Bulbasaur", 5),
       turn: 1,
       log: ["Battle started! Select moves for both Pokémon."],
       battleOver: false

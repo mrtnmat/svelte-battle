@@ -1,54 +1,9 @@
 <script>
-  import { moveList } from "../Moves.js";
+  import { createPokemon } from "../PokemonFactory.js";
   import PokemonCard from "../components/PokemonCard.svelte";
   import BattleLog from "../components/BattleLog.svelte";
   import { executeTurn, selectRandomMove } from "../BattleMechanics.js";
   import { changeScene, SCENES } from './SceneManager.svelte.js';
-  
-  // Create initial Pokemon templates
-  function createPikachu() {
-    return {
-      name: "Pikachu",
-      level: 15,
-      hp: 35,
-      maxHp: 35,
-      attack: 21,
-      defense: 17,
-      speed: 32,
-      moves: {
-        'Move 1': {
-          ...moveList["Tackle"],
-          ppRemaining: 10,
-        },
-        'Move 2': {
-          ...moveList["Thundershock"],
-          ppRemaining: 20,
-        },
-      }
-    };
-  }
-
-  function createBulbasaur() {
-    return {
-      name: "Bulbasaur",
-      level: 5,
-      hp: 19,
-      maxHp: 19,
-      attack: 9,
-      defense: 9,
-      speed: 9,
-      moves: {
-        'Move 1': {
-          ...moveList["Tackle"],
-          ppRemaining: 20,
-        },
-        'Move 2': {
-          ...moveList["Vine Whip"],
-          ppRemaining: 20,
-        },
-      }
-    };
-  }
   
   // Gauntlet state keeps track of progress across battles
   let gauntletState = $state({
@@ -64,8 +19,8 @@
   initGauntlet();
   
   function initGauntlet() {
-    // Create initial player Pokémon
-    gauntletState.playerPokemon = createPikachu();
+    // Create player Pokémon
+    gauntletState.playerPokemon = createPokemon("Pikachu", 15);
     gauntletState.defeatedCount = 0;
     
     // Start the first battle
@@ -73,8 +28,15 @@
   }
   
   function generateNextBattle() {
-    // Create the enemy Pokémon
-    const enemyPokemon = createBulbasaur();
+    // For each battle, increase the enemy level slightly
+    const enemyLevel = 5 + Math.floor(gauntletState.defeatedCount / 2);
+    
+    // Randomly select enemy species from available Pokémon
+    const enemyOptions = ["Bulbasaur", "Charmander", "Squirtle"];
+    const enemySpecies = enemyOptions[Math.floor(Math.random() * enemyOptions.length)];
+    
+    // Create enemy Pokémon
+    const enemyPokemon = createPokemon(enemySpecies, enemyLevel);
     
     // Set up battle state
     battleState = {
@@ -148,7 +110,7 @@
     <!-- Player Pokémon (showing clickable moves) -->
     <PokemonCard
       pokemon={battleState.pokemon1}
-      selectedMove={null}
+      selectedMove={null} 
       color="blue"
       battleOver={battleState.battleOver}
       onMoveSelect={(moveIndex) => handleMoveSelect(moveIndex)}

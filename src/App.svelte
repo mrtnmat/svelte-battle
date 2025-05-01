@@ -20,8 +20,6 @@
     battleOver={gameState.battleOver}
     onMoveSelect={(moveIndex) => handleMoveSelect("pokemon1", moveIndex)}
   />
-
-  <p class="read-the-docs">Click on the Vite and Svelte logos to learn more</p>
 </main>
 
 <style>

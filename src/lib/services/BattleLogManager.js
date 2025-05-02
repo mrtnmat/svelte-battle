@@ -64,6 +64,8 @@ function setupEventListeners() {
         addLogMessage(`${event.pokemon.name} is unable to attack!`);
       } else if (event.reason === 'no-pp') {
         addLogMessage(`${event.pokemon.name} tried to use ${event.move.name}, but it has no PP left!`);
+      } else if (event.reason === 'status-effect') {
+        addLogMessage(`${event.pokemon.name} is unable to move due to status!`);
       }
     } else {
       addLogMessage(`${event.pokemon.name} used ${event.move.name}!`);
@@ -76,6 +78,18 @@ function setupEventListeners() {
     addLogMessage(`${event.pokemon.name}'s attack missed!`);
   });
   unsubscribeFunctions.push(unsubMoveMissed);
+
+  // Move failed
+  const unsubMoveFailed = battleEvents.on(BATTLE_EVENTS.MOVE_FAILED, (event) => {
+    if (event.reason === 'no-damage-to-counter') {
+      addLogMessage(`${event.pokemon.name}'s Counter failed! It hasn't taken damage yet.`);
+    } else if (event.reason === 'execute-function-missing') {
+      addLogMessage(`${event.pokemon.name}'s ${event.move.name} failed to execute!`);
+    } else {
+      addLogMessage(`${event.pokemon.name}'s move failed!`);
+    }
+  });
+  unsubscribeFunctions.push(unsubMoveFailed);
 
   // Metronome selected
   const unsubMetronomeSelected = battleEvents.on(BATTLE_EVENTS.METRONOME_SELECTED, (event) => {
@@ -119,9 +133,37 @@ function setupEventListeners() {
 
   // Healing applied
   const unsubHealingApplied = battleEvents.on(BATTLE_EVENTS.HEALING_APPLIED, (event) => {
-    addLogMessage(`${event.pokemon.name} recovered ${event.healAmount} HP!`);
+    if (event.source === 'vampiric') {
+      addLogMessage(`${event.pokemon.name} drained ${event.healAmount} HP!`);
+    } else {
+      addLogMessage(`${event.pokemon.name} recovered ${event.healAmount} HP!`);
+    }
   });
   unsubscribeFunctions.push(unsubHealingApplied);
+
+  // Recoil damage
+  const unsubRecoilDamage = battleEvents.on(BATTLE_EVENTS.RECOIL_DAMAGE, (event) => {
+    addLogMessage(`${event.pokemon.name} was hit with ${event.recoilDamage} recoil damage!`);
+  });
+  unsubscribeFunctions.push(unsubRecoilDamage);
+
+  // Multi-hit
+  const unsubMultiHit = battleEvents.on(BATTLE_EVENTS.MULTI_HIT, (event) => {
+    if (event.hitNumber === 1) {
+      addLogMessage(`${event.pokemon.name}'s attack hits multiple times!`);
+    }
+    addLogMessage(`Hit ${event.hitNumber}: ${event.damage} damage!`);
+    if (event.hitNumber === event.totalHits) {
+      addLogMessage(`Hit ${event.totalHits} times in total!`);
+    }
+  });
+  unsubscribeFunctions.push(unsubMultiHit);
+
+  // Counter triggered
+  const unsubCounterTriggered = battleEvents.on(BATTLE_EVENTS.COUNTER_TRIGGERED, (event) => {
+    addLogMessage(`${event.pokemon.name}'s Counter returned ${event.counterDamage} damage!`);
+  });
+  unsubscribeFunctions.push(unsubCounterTriggered);
 
   // Status effect applied
   const unsubStatusApplied = battleEvents.on(BATTLE_EVENTS.STATUS_EFFECT_APPLIED, (event) => {
@@ -134,6 +176,15 @@ function setupEventListeners() {
     addLogMessage(`${event.pokemon.name} recovered from ${event.statusEffect}!`);
   });
   unsubscribeFunctions.push(unsubStatusRemoved);
+
+  // Status effect triggered
+  const unsubStatusTriggered = battleEvents.on(BATTLE_EVENTS.STATUS_EFFECT_TRIGGERED, (event) => {
+    addLogMessage(`${event.pokemon.name} is affected by ${event.statusEffect}!`);
+    if (event.effect === 'Skip Turn') {
+      addLogMessage(`${event.pokemon.name} is paralyzed and can't move!`);
+    }
+  });
+  unsubscribeFunctions.push(unsubStatusTriggered);
 
   // Stat boosted
   const unsubStatBoosted = battleEvents.on(BATTLE_EVENTS.STAT_BOOSTED, (event) => {

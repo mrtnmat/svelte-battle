@@ -3,8 +3,7 @@
   import MainMenuScene from './lib/scenes/MainMenu.svelte';
   import BattleScene from './lib/scenes/BattleScene.svelte';
   import GauntletScene from './lib/scenes/GauntletScene.svelte';
-  import AdvancedBattleScene from './lib/scenes/AdvancedBattleScene.svelte';
-  import AdvancedBattleTest from './lib/scenes/AdvancedBattleTest.svelte';
+  import MoveConstructor from './lib/scenes/MoveConstructor.svelte';
   
   // Use $derived to track the current scene
   let currentScene = $derived(sceneState.currentScene);
@@ -17,10 +16,8 @@
     <BattleScene />
   {:else if currentScene === SCENES.GAUNTLET}
     <GauntletScene />
-  {:else if currentScene === SCENES.ADVANCED_BATTLE}
-    <AdvancedBattleScene />
-  {:else if currentScene === SCENES.ADVANCED_BATTLE_TEST}
-    <AdvancedBattleTest />
+  {:else if currentScene === SCENES.MOVE_CONSTRUCTOR}
+    <MoveConstructor />
   {/if}
 </main>
 

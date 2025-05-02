@@ -186,42 +186,9 @@ export const moveList = {
     category: 'Status',
     type: 'Normal',
     description: 'The user growls in an endearing way, making opposing Pokémon less wary. This lowers their Attack stats.',
-    execute: (params) => {
-      const { attacker, defender, move, battleState } = params;
-
-      // Check if the move hits
-      if (!MoveEffects.accuracyCheck(params)) {
-        return {
-          hit: false,
-          defender,
-          damage: 0
-        };
-      }
-
-      // Clone defender to avoid direct mutations
-      let newDefender = { ...defender };
-
-      // Lower attack stat
-      const oldAttack = newDefender.attack;
-      newDefender.attack = Math.max(Math.floor(newDefender.attack * 0.75), 1);
-
-      // Emit stat lowered event
-      battleEvents.emit(
-        BATTLE_EVENTS.STAT_LOWERED,
-        createEventData(BATTLE_EVENTS.STAT_LOWERED, {
-          pokemon: newDefender,
-          stat: 'attack',
-          amount: oldAttack - newDefender.attack
-        })
-      );
-
-      return {
-        hit: true,
-        defender: newDefender,
-        damage: 0,
-        statLowered: 'attack'
-      };
-    }
+    stat: 'attack',
+    reduction: 0.75, // Reduce to 75% of current value
+    execute: MoveEffects.statLowerTarget
   }),
 
   'Growth': createMove({
@@ -269,7 +236,8 @@ export const moveList = {
     defenseStat: 'defense',       // But targets physical defense!
     execute: MoveEffects.standardAttack
   }),
-// Status inducing moves
+
+  // Status inducing moves
   'Thunder Wave': createMove({
     name: 'Thunder Wave',
     power: 0,
@@ -282,94 +250,131 @@ export const moveList = {
     execute: MoveEffects.statusMove
   }),
   
-  // Import advanced move effects
-  ...(() => {
-    try {
-      // Dynamic import of advanced move effects (only if file exists)
-      const AdvancedMoveEffects = require('./AdvancedMoveEffects.js');
-      
-      // Return advanced moves if available
-      return {
-        // Moves with recoil damage
-        'Double-Edge': createMove({
-          name: 'Double-Edge',
-          power: 120,
-          pp: 15,
-          accuracy: 100,
-          category: 'Physical',
-          type: 'Normal',
-          description: 'A reckless, life-risking tackle that also hurts the user.',
-          recoilPercent: 0.33, // 1/3 of damage dealt
-          execute: AdvancedMoveEffects.recoilAttack
-        }),
-        
-        // Multi-hit moves
-        'Pin Missile': createMove({
-          name: 'Pin Missile',
-          power: 25, // Power per hit
-          pp: 20,
-          accuracy: 95,
-          category: 'Physical',
-          type: 'Bug',
-          description: 'Sharp spikes are shot at the target in rapid succession. Hits 2-5 times.',
-          execute: AdvancedMoveEffects.multiHitAttack
-        }),
-        
-        // Moves with secondary effects
-        'Fire Punch': createMove({
-          name: 'Fire Punch',
-          power: 75,
-          pp: 15,
-          accuracy: 100,
-          category: 'Physical',
-          type: 'Fire',
-          description: 'The target is punched with a fiery fist. This may leave the target with a burn.',
-          statusEffect: 'Burn',
-          statusDuration: 3,
-          secondaryEffectChance: 10, // 10% chance to burn
-          execute: AdvancedMoveEffects.secondaryEffectAttack
-        }),
-        
-        // Vampiric moves
-        'Giga Drain': createMove({
-          name: 'Giga Drain',
-          power: 75,
-          pp: 10,
-          accuracy: 100,
-          category: 'Special',
-          type: 'Grass',
-          description: 'A nutrient-draining attack. The user\'s HP is restored by half the damage taken by the target.',
-          healPercent: 50, // 50% of damage dealt
-          execute: AdvancedMoveEffects.vampiricAttack
-        }),
-        
-        // Combo moves
-        'Swords Dance': createMove({
-          name: 'Swords Dance',
-          power: 0,
-          pp: 20,
-          category: 'Status',
-          type: 'Normal',
-          description: 'A frenetic dance to uplift the fighting spirit. Sharply raises the user\'s Attack stat.',
-          firstEffect: (params) => {
-            // Boost attack by 2 stages (double)
-            const result = { ...params };
-            result.statToBoost = 'attack';
-            result.boostAmount = 2;
-            return MoveEffects.statBoostSelf(result);
-          },
-          secondEffect: (params) => {
-            // Small self-healing
-            const result = { ...params };
-            result.healPercent = 10;
-            return MoveEffects.healingMove(result);
-          },
-          execute: AdvancedMoveEffects.comboMove
-        })
-      };
-    } catch (e) {
-      // Return empty object if advanced moves not available
-      return {};
-    }
-  })()
+  // Advanced moves - now directly imported from MoveEffects
+  
+  // Moves with recoil damage
+  'Double-Edge': createMove({
+    name: 'Double-Edge',
+    power: 120,
+    pp: 15,
+    accuracy: 100,
+    category: 'Physical',
+    type: 'Normal',
+    description: 'A reckless, life-risking tackle that also hurts the user.',
+    recoilPercent: 0.33, // 1/3 of damage dealt
+    execute: MoveEffects.recoilAttack
+  }),
+  
+  // Multi-hit moves
+  'Pin Missile': createMove({
+    name: 'Pin Missile',
+    power: 25, // Power per hit
+    pp: 20,
+    accuracy: 95,
+    category: 'Physical',
+    type: 'Bug',
+    description: 'Sharp spikes are shot at the target in rapid succession. Hits 2-5 times.',
+    execute: MoveEffects.multiHitAttack
+  }),
+  
+  // Moves with secondary effects
+  'Fire Punch': createMove({
+    name: 'Fire Punch',
+    power: 75,
+    pp: 15,
+    accuracy: 100,
+    category: 'Physical',
+    type: 'Fire',
+    description: 'The target is punched with a fiery fist. This may leave the target with a burn.',
+    statusEffect: 'Burn',
+    statusDuration: 3,
+    secondaryEffectChance: 10, // 10% chance to burn
+    execute: MoveEffects.secondaryEffectAttack
+  }),
+  
+  // Vampiric moves
+  'Giga Drain': createMove({
+    name: 'Giga Drain',
+    power: 75,
+    pp: 10,
+    accuracy: 100,
+    category: 'Special',
+    type: 'Grass',
+    description: 'A nutrient-draining attack. The user\'s HP is restored by half the damage taken by the target.',
+    healPercent: 50, // 50% of damage dealt
+    execute: MoveEffects.vampiricAttack
+  }),
+  
+  // Combo moves
+  'Swords Dance': createMove({
+    name: 'Swords Dance',
+    power: 0,
+    pp: 20,
+    category: 'Status',
+    type: 'Normal',
+    description: 'A frenetic dance to uplift the fighting spirit. Sharply raises the user\'s Attack stat.',
+    firstEffect: (params) => {
+      // Boost attack by 2 stages (double)
+      const result = { ...params };
+      result.statToBoost = 'attack';
+      result.boostAmount = 2;
+      return MoveEffects.statBoostSelf(result);
+    },
+    secondEffect: (params) => {
+      // Small self-healing
+      const result = { ...params };
+      result.healPercent = 10;
+      return MoveEffects.healingMove(result);
+    },
+    execute: MoveEffects.comboMove
+  }),
+  
+  // Counter move
+  'Counter': createMove({
+    name: 'Counter',
+    power: 0, // Power is dynamically calculated
+    pp: 20,
+    accuracy: 100,
+    category: 'Physical',
+    type: 'Fighting',
+    description: 'A retaliation move that counters any physical attack, inflicting double the damage taken.',
+    execute: MoveEffects.counterMove
+  }),
+  
+  // Additional stat-lowering moves using our new function
+  'Tail Whip': createMove({
+    name: 'Tail Whip',
+    power: 0,
+    pp: 30,
+    category: 'Status',
+    type: 'Normal',
+    description: 'The user wags its tail cutely, making opposing Pokémon less wary and lowering their Defense stat.',
+    stat: 'defense',
+    reduction: 0.75,
+    execute: MoveEffects.statLowerTarget
+  }),
+  
+  'Leer': createMove({
+    name: 'Leer',
+    power: 0,
+    pp: 30,
+    category: 'Status',
+    type: 'Normal',
+    description: 'The user gives opposing Pokémon an intimidating leer that lowers the Defense stat.',
+    stat: 'defense',
+    reduction: 0.75,
+    execute: MoveEffects.statLowerTarget
+  }),
+  
+  'String Shot': createMove({
+    name: 'String Shot',
+    power: 0,
+    pp: 40,
+    category: 'Status',
+    type: 'Bug',
+    description: 'The user binds the target with silk blown from its mouth. This lowers the target\'s Speed stat.',
+    stat: 'speed',
+    reduction: 0.66, // Reduce by a larger amount (to 66% of current)
+    execute: MoveEffects.statLowerTarget
+  })
 }

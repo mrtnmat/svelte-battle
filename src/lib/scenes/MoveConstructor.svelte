@@ -155,7 +155,7 @@
 
 <div class="max-w-4xl mx-auto bg-white p-4 rounded-lg shadow-md">
     <div class="flex justify-between items-center mb-4">
-        <h2 class="text-xl font-bold">Advanced Battle Test</h2>
+        <h2 class="text-xl font-bold">Move Constructor</h2>
         <button
             class="p-2 bg-gray-200 hover:bg-gray-300 rounded-md text-sm"
             onclick={() => changeScene(SCENES.MAIN_MENU)}

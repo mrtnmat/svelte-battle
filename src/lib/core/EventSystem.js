@@ -16,18 +16,23 @@ export const BATTLE_EVENTS = {
   MOVE_SELECTED: 'move:selected',
   MOVE_USED: 'move:used',
   MOVE_MISSED: 'move:missed',
+  MOVE_FAILED: 'move:failed',
   DAMAGE_CALCULATED: 'damage:calculated',
   DAMAGE_APPLIED: 'damage:applied',
   HEALING_APPLIED: 'healing:applied',
   STATUS_EFFECT_APPLIED: 'status:applied',
   STATUS_EFFECT_REMOVED: 'status:removed',
+  STATUS_EFFECT_TRIGGERED: 'status:triggered',
   STAT_BOOSTED: 'stat:boosted',
   STAT_LOWERED: 'stat:lowered',
   METRONOME_SELECTED: 'metronome:selected',
   POKEMON_FAINTED: 'pokemon:fainted',
   BATTLE_ENDED: 'battle:ended',
   SPEED_COMPARISON: 'speed:comparison',
-  PP_UPDATED: 'pp:updated'
+  PP_UPDATED: 'pp:updated',
+  RECOIL_DAMAGE: 'recoil:damage',
+  MULTI_HIT: 'multi:hit',
+  COUNTER_TRIGGERED: 'counter:triggered'
 };
 
 // Event emitter for components to subscribe to

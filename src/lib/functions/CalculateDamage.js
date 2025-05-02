@@ -1,4 +1,4 @@
-import { STAB_BONUS } from "../Constants"
+import { STAB_BONUS } from "../core/Constants"
 import { typeEffectiveness } from "../core/Types"
 
 const effectivness = ({atkType, defType}) => typeEffectiveness[atkType][defType]

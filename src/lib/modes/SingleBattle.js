@@ -6,25 +6,26 @@
 
 import { createBattleState, executeTurn } from '../core/BattleEngine.js';
 import { createPokemon } from '../core/PokemonFactory.js';
+import { initializeBattleLog, addCustomLogMessage } from '../services/BattleLogManager.js';
 
 /**
  * Create initial state for a single battle
  */
 export function createInitialState(pokemon1, pokemon2) {
+  // Initialize the battle log
+  initializeBattleLog();
+
   // Default Pokémon if not provided
   const player = pokemon1 || createPokemon("Pikachu", 15);
   const opponent = pokemon2 || createPokemon("Bulbasaur", 5);
-  
+
   // Create the battle state
   const battleState = createBattleState(player, opponent);
-  
-  // Add welcome message
-  battleState.log = ["Battle started! Select moves for both Pokémon."];
-  
+
   return {
     // Battle state from the core engine
     battle: battleState,
-    
+
     // Mode-specific UI state (not part of core battle state)
     ui: {
       selectedMoves: {
@@ -50,16 +51,16 @@ export function selectMove(state, pokemonId, moveKey) {
       }
     }
   };
-  
+
   // Check if both moves are selected
   const pokemon1Move = newState.ui.selectedMoves.pokemon1;
   const pokemon2Move = newState.ui.selectedMoves.pokemon2;
-  
+
   if (pokemon1Move !== null && pokemon2Move !== null) {
     // Execute the turn if both moves are selected
     return executeBattleTurn(newState);
   }
-  
+
   return newState;
 }
 
@@ -70,14 +71,14 @@ function executeBattleTurn(state) {
   // Get the selected moves
   const pokemon1Move = state.ui.selectedMoves.pokemon1;
   const pokemon2Move = state.ui.selectedMoves.pokemon2;
-  
+
   // Execute the turn in the core battle engine
   const newBattleState = executeTurn(
     state.battle,
     pokemon1Move,
     pokemon2Move
   );
-  
+
   // Reset selected moves for the next turn
   return {
     battle: newBattleState,
@@ -108,7 +109,7 @@ export function resetBattle(state) {
   // Create a fresh battle state with the same Pokémon
   const player = state.battle.pokemon1;
   const opponent = state.battle.pokemon2;
-  
+
   // Reset HP and PP
   const refreshedPlayer = {
     ...player,
@@ -123,7 +124,7 @@ export function resetBattle(state) {
       };
     }, {})
   };
-  
+
   const refreshedOpponent = {
     ...opponent,
     hp: opponent.maxHp,
@@ -137,7 +138,10 @@ export function resetBattle(state) {
       };
     }, {})
   };
-  
+
+  // Add a custom log message for the reset
+  addCustomLogMessage("Starting a new battle!");
+
   // Create a new battle state
   return createInitialState(refreshedPlayer, refreshedOpponent);
 }

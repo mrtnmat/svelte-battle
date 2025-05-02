@@ -1,0 +1,131 @@
+/**
+ * Battle Log Manager
+ * 
+ * This service listens to battle events and generates appropriate log messages.
+ */
+
+import { writable } from 'svelte/store';
+import { battleEvents, BATTLE_EVENTS } from '../core/EventSystem.js';
+
+// Create a store for the log messages
+export const battleLog = writable([]);
+
+// Store all unsubscribe functions
+let unsubscribeFunctions = [];
+
+// Initialize the battle log
+export function initializeBattleLog() {
+  // Clean up existing subscriptions first to prevent duplicates
+  cleanupEventListeners();
+
+  // Reset log messages
+  battleLog.set([]);
+
+  // Set up fresh event listeners
+  setupEventListeners();
+}
+
+// Remove all event listeners
+export function cleanupEventListeners() {
+  // Call each unsubscribe function
+  unsubscribeFunctions.forEach(unsubscribe => unsubscribe());
+
+  // Reset the array
+  unsubscribeFunctions = [];
+}
+
+// Setup all event listeners
+function setupEventListeners() {
+  // Battle started
+  const unsubBattleStart = battleEvents.on(BATTLE_EVENTS.BATTLE_STARTED, (event) => {
+    addLogMessage(`Battle started between ${event.pokemon1.name} and ${event.pokemon2.name}!`);
+    addLogMessage(`Select moves for both Pokémon.`);
+  });
+  unsubscribeFunctions.push(unsubBattleStart);
+
+  // Turn started
+  const unsubTurnStart = battleEvents.on(BATTLE_EVENTS.TURN_STARTED, (event) => {
+    if (event.turn > 1) { // Don't show for the first turn
+      addLogMessage(`Turn ${event.turn} begins!`);
+    }
+  });
+  unsubscribeFunctions.push(unsubTurnStart);
+
+  // Speed comparison
+  const unsubSpeedComp = battleEvents.on(BATTLE_EVENTS.SPEED_COMPARISON, (event) => {
+    addLogMessage(`${event.firstAttacker} moves first due to higher speed!`);
+  });
+  unsubscribeFunctions.push(unsubSpeedComp);
+
+  // Move used
+  const unsubMoveUsed = battleEvents.on(BATTLE_EVENTS.MOVE_USED, (event) => {
+    if (event.failed) {
+      if (event.reason === 'fainted') {
+        addLogMessage(`${event.pokemon.name} is unable to attack!`);
+      } else if (event.reason === 'no-pp') {
+        addLogMessage(`${event.pokemon.name} tried to use ${event.move.name}, but it has no PP left!`);
+      }
+    } else {
+      addLogMessage(`${event.pokemon.name} used ${event.move.name}!`);
+      addLogMessage(`${event.move.name} is a ${event.move.type}-type ${event.move.category} move!`);
+
+      if (event.move.category === 'Physical') {
+        addLogMessage(`Used ${event.pokemon.name}'s Attack (${event.pokemon.attack}) against ${event.target.name}'s Defense (${event.target.defense})!`);
+      } else if (event.move.category === 'Special') {
+        addLogMessage(`Used ${event.pokemon.name}'s Special Attack (${event.pokemon.specialAttack}) against ${event.target.name}'s Special Defense (${event.target.specialDefense})!`);
+      }
+    }
+  });
+  unsubscribeFunctions.push(unsubMoveUsed);
+
+  // Damage calculated
+  const unsubDamageCalc = battleEvents.on(BATTLE_EVENTS.DAMAGE_CALCULATED, (event) => {
+    // Log STAB bonus
+    if (event.stabModifier > 1) {
+      addLogMessage(`It's ${event.attacker.name}'s same type! Attack power increased by 50%!`);
+    }
+
+    // Log type effectiveness
+    if (event.typeModifier > 1) {
+      addLogMessage(`It's super effective! (x${event.typeModifier})`);
+    } else if (event.typeModifier < 1 && event.typeModifier > 0) {
+      addLogMessage(`It's not very effective... (x${event.typeModifier})`);
+    } else if (event.typeModifier === 0) {
+      addLogMessage(`It doesn't affect ${event.defender.name}...`);
+    }
+  });
+  unsubscribeFunctions.push(unsubDamageCalc);
+
+  // Damage applied
+  const unsubDamageApplied = battleEvents.on(BATTLE_EVENTS.DAMAGE_APPLIED, (event) => {
+    addLogMessage(`${event.pokemon.name} took ${event.damageAmount} damage!`);
+  });
+  unsubscribeFunctions.push(unsubDamageApplied);
+
+  // Pokémon fainted
+  const unsubPokemonFainted = battleEvents.on(BATTLE_EVENTS.POKEMON_FAINTED, (event) => {
+    addLogMessage(`${event.pokemon.name} fainted!`);
+  });
+  unsubscribeFunctions.push(unsubPokemonFainted);
+
+  // Battle ended
+  const unsubBattleEnded = battleEvents.on(BATTLE_EVENTS.BATTLE_ENDED, (event) => {
+    addLogMessage(`${event.winner.name} won the battle!`);
+  });
+  unsubscribeFunctions.push(unsubBattleEnded);
+}
+
+// Helper function to add a message to the log
+function addLogMessage(message) {
+  battleLog.update(log => [...log, message]);
+}
+
+// Export function to manually add messages (for use in game modes)
+export function addCustomLogMessage(message) {
+  addLogMessage(message);
+}
+
+// Reset the battle log
+export function resetBattleLog() {
+  battleLog.set([]);
+}

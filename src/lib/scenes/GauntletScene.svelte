@@ -3,6 +3,12 @@
   import BattleLog from "../components/BattleLog.svelte";
   import { changeScene, SCENES } from "./SceneManager.svelte.js";
   import * as Gauntlet from "../modes/Gauntlet.js";
+  import {
+    battleLog,
+    cleanupEventListeners,
+  } from "../services/BattleLogManager.js";
+  import { gauntletLog } from "../modes/Gauntlet.js";
+  import { onDestroy } from "svelte";
 
   // Create initial game state
   let gameState = $state(Gauntlet.createInitialState());
@@ -31,6 +37,11 @@
 
   // Computed property for gauntlet over state
   let gauntletOver = $derived(Gauntlet.isGauntletOver(gameState));
+
+  // Clean up event listeners when component is destroyed
+  onDestroy(() => {
+    cleanupEventListeners();
+  });
 </script>
 
 <div class="max-w-md mx-auto bg-white p-4 rounded-lg shadow-md">
@@ -69,14 +80,14 @@
     <!-- Current battle log -->
     <div class="mb-4">
       <h3 class="font-bold mb-1">Current Battle:</h3>
-      <BattleLog messages={battleState.log} />
+      <BattleLog />
     </div>
   {/if}
 
   <!-- Gauntlet history log -->
   <div>
     <h3 class="font-bold mb-1">Gauntlet History:</h3>
-    <BattleLog messages={gauntletState.log} />
+    <BattleLog customMessages={$gauntletLog} />
   </div>
 
   {#if gauntletOver}

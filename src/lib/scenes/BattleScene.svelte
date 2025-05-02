@@ -4,6 +4,11 @@
   import BattleLog from "../components/BattleLog.svelte";
   import { changeScene, SCENES } from "./SceneManager.svelte.js";
   import * as SingleBattle from "../modes/SingleBattle.js";
+  import {
+    battleLog,
+    cleanupEventListeners,
+  } from "../services/BattleLogManager.js";
+  import { onDestroy } from "svelte";
 
   // Create initial state with default Pokémon
   let gameState = $state(
@@ -31,6 +36,11 @@
   function handleReset() {
     gameState = SingleBattle.resetBattle(gameState);
   }
+
+  // Clean up event listeners when component is destroyed
+  onDestroy(() => {
+    cleanupEventListeners();
+  });
 </script>
 
 <div class="max-w-md mx-auto bg-white p-4 rounded-lg shadow-md">
@@ -62,8 +72,8 @@
     onMoveSelect={(moveKey) => handleMoveSelect("pokemon2", moveKey)}
   />
 
-  <!-- Battle log -->
-  <BattleLog messages={battleState.log} />
+  <!-- Battle log - uses the battleLog store now -->
+  <BattleLog />
 
   {#if battleState.battleOver}
     <button

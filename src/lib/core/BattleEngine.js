@@ -6,19 +6,30 @@
  */
 
 import { typeEffectiveness } from './Types.js';
+import { battleEvents, BATTLE_EVENTS, createEventData } from './EventSystem.js';
 
 /**
  * Creates an initial battle state with two Pokémon
  */
 export function createBattleState(pokemon1, pokemon2) {
-  return {
+  const battleState = {
     pokemon1: { ...pokemon1 },
     pokemon2: { ...pokemon2 },
     turn: 1,
-    log: ["Battle started!"],
     battleOver: false,
     winner: null
   };
+  
+  // Emit battle started event
+  battleEvents.emit(
+    BATTLE_EVENTS.BATTLE_STARTED, 
+    createEventData(BATTLE_EVENTS.BATTLE_STARTED, { 
+      pokemon1: battleState.pokemon1,
+      pokemon2: battleState.pokemon2
+    })
+  );
+  
+  return battleState;
 }
 
 /**
@@ -59,11 +70,24 @@ export function calculateDamage({ attacker, defender, move }) {
   const randomFactor = (Math.random() * 15 + 85) / 100;
   const finalDamage = baseDamage * randomFactor * stabModifier * typeModifier;
   
-  return {
+  const damageResult = {
     damage: Math.max(1, Math.round(finalDamage)),
     stabModifier,
     typeModifier
   };
+  
+  // Emit damage calculated event
+  battleEvents.emit(
+    BATTLE_EVENTS.DAMAGE_CALCULATED,
+    createEventData(BATTLE_EVENTS.DAMAGE_CALCULATED, {
+      attacker,
+      defender,
+      move,
+      ...damageResult
+    })
+  );
+  
+  return damageResult;
 }
 
 /**
@@ -72,6 +96,18 @@ export function calculateDamage({ attacker, defender, move }) {
 export function applyDamage(pokemon, amount) {
   const newPokemon = { ...pokemon };
   newPokemon.hp = Math.max(0, newPokemon.hp - amount);
+  
+  // Emit damage applied event
+  battleEvents.emit(
+    BATTLE_EVENTS.DAMAGE_APPLIED,
+    createEventData(BATTLE_EVENTS.DAMAGE_APPLIED, {
+      pokemon: newPokemon,
+      damageAmount: amount,
+      remainingHp: newPokemon.hp,
+      maxHp: newPokemon.maxHp
+    })
+  );
+  
   return newPokemon;
 }
 
@@ -86,10 +122,16 @@ export function executeAttack(state, attackerId, defenderId, moveKey) {
   
   // Check if attacker is already fainted
   if (attacker.hp <= 0) {
-    return {
-      ...newState,
-      log: [...newState.log, `${attacker.name} is unable to attack!`]
-    };
+    battleEvents.emit(
+      BATTLE_EVENTS.MOVE_USED,
+      createEventData(BATTLE_EVENTS.MOVE_USED, {
+        pokemon: attacker,
+        failed: true,
+        reason: 'fainted'
+      })
+    );
+    
+    return newState;
   }
   
   // Get the move
@@ -97,17 +139,43 @@ export function executeAttack(state, attackerId, defenderId, moveKey) {
   
   // Check if move has PP left
   if (move.ppRemaining <= 0) {
-    return {
-      ...newState,
-      log: [...newState.log, `${attacker.name} tried to use ${move.name}, but it has no PP left!`]
-    };
+    battleEvents.emit(
+      BATTLE_EVENTS.MOVE_USED,
+      createEventData(BATTLE_EVENTS.MOVE_USED, {
+        pokemon: attacker,
+        move,
+        failed: true,
+        reason: 'no-pp'
+      })
+    );
+    
+    return newState;
   }
   
   // Reduce PP
   move.ppRemaining--;
   
-  // Add log entry about the move
-  const updatedLog = [...newState.log, `${attacker.name} used ${move.name}!`];
+  // Emit PP updated event
+  battleEvents.emit(
+    BATTLE_EVENTS.PP_UPDATED,
+    createEventData(BATTLE_EVENTS.PP_UPDATED, {
+      pokemon: attacker,
+      move,
+      remainingPP: move.ppRemaining,
+      maxPP: move.pp
+    })
+  );
+  
+  // Emit move used event
+  battleEvents.emit(
+    BATTLE_EVENTS.MOVE_USED,
+    createEventData(BATTLE_EVENTS.MOVE_USED, {
+      pokemon: attacker,
+      target: defender,
+      move,
+      moveKey
+    })
+  );
   
   // Calculate damage
   const damageResult = calculateDamage({ attacker, defender, move });
@@ -115,45 +183,34 @@ export function executeAttack(state, attackerId, defenderId, moveKey) {
   // Apply damage
   newState[defenderId] = applyDamage(defender, damageResult.damage);
   
-  // Update log with damage info
-  const categoryLog = `${move.name} is a ${move.type}-type ${move.category} move!`;
-  const statsLog = move.category === 'Physical' 
-    ? `Used ${attacker.name}'s Attack (${attacker.attack}) against ${defender.name}'s Defense (${defender.defense})!`
-    : `Used ${attacker.name}'s Special Attack (${attacker.specialAttack}) against ${defender.name}'s Special Defense (${defender.specialDefense})!`;
-  
-  updatedLog.push(categoryLog);
-  updatedLog.push(statsLog);
-  
-  // Log STAB bonus
-  if (damageResult.stabModifier > 1) {
-    updatedLog.push(`It's ${attacker.name}'s same type! Attack power increased by 50%!`);
-  }
-  
-  // Log type effectiveness
-  if (damageResult.typeModifier > 1) {
-    updatedLog.push(`It's super effective! (x${damageResult.typeModifier})`);
-  } else if (damageResult.typeModifier < 1 && damageResult.typeModifier > 0) {
-    updatedLog.push(`It's not very effective... (x${damageResult.typeModifier})`);
-  } else if (damageResult.typeModifier === 0) {
-    updatedLog.push(`It doesn't affect ${defender.name}...`);
-  }
-  
-  updatedLog.push(`${defender.name} took ${damageResult.damage} damage!`);
-  
   // Check if defender fainted
   let battleOver = newState.battleOver;
   let winner = newState.winner;
   
   if (newState[defenderId].hp <= 0) {
-    updatedLog.push(`${defender.name} fainted!`);
-    updatedLog.push(`${attacker.name} won the battle!`);
+    // Emit pokemon fainted event
+    battleEvents.emit(
+      BATTLE_EVENTS.POKEMON_FAINTED,
+      createEventData(BATTLE_EVENTS.POKEMON_FAINTED, {
+        pokemon: newState[defenderId]
+      })
+    );
+    
     battleOver = true;
     winner = attackerId;
+    
+    // Emit battle ended event
+    battleEvents.emit(
+      BATTLE_EVENTS.BATTLE_ENDED,
+      createEventData(BATTLE_EVENTS.BATTLE_ENDED, {
+        winner: newState[attackerId],
+        loser: newState[defenderId]
+      })
+    );
   }
   
   return {
     ...newState,
-    log: updatedLog,
     battleOver,
     winner
   };
@@ -169,6 +226,16 @@ export function executeTurn(state, pokemon1MoveKey, pokemon2MoveKey) {
   if (newState.battleOver) {
     return newState;
   }
+  
+  // Emit turn started event
+  battleEvents.emit(
+    BATTLE_EVENTS.TURN_STARTED,
+    createEventData(BATTLE_EVENTS.TURN_STARTED, {
+      turn: newState.turn,
+      pokemon1: newState.pokemon1,
+      pokemon2: newState.pokemon2
+    })
+  );
   
   // Determine who goes first based on speed
   const pokemon1Speed = newState.pokemon1.speed;
@@ -189,11 +256,40 @@ export function executeTurn(state, pokemon1MoveKey, pokemon2MoveKey) {
         ['pokemon1', 'pokemon2', pokemon1MoveKey]
       ];
   
-  // Add log entry about turn order
-  newState = {
-    ...newState,
-    log: [...newState.log, `${newState[order[0][0]].name} moves first due to higher speed!`]
-  };
+  // Emit speed comparison event
+  battleEvents.emit(
+    BATTLE_EVENTS.SPEED_COMPARISON,
+    createEventData(BATTLE_EVENTS.SPEED_COMPARISON, {
+      pokemon1: {
+        name: newState.pokemon1.name,
+        speed: pokemon1Speed
+      },
+      pokemon2: {
+        name: newState.pokemon2.name,
+        speed: pokemon2Speed
+      },
+      firstAttacker: newState[order[0][0]].name
+    })
+  );
+  
+  // Emit move selected events
+  battleEvents.emit(
+    BATTLE_EVENTS.MOVE_SELECTED,
+    createEventData(BATTLE_EVENTS.MOVE_SELECTED, {
+      pokemon: newState.pokemon1,
+      moveKey: pokemon1MoveKey,
+      move: newState.pokemon1.moves[pokemon1MoveKey]
+    })
+  );
+  
+  battleEvents.emit(
+    BATTLE_EVENTS.MOVE_SELECTED,
+    createEventData(BATTLE_EVENTS.MOVE_SELECTED, {
+      pokemon: newState.pokemon2,
+      moveKey: pokemon2MoveKey,
+      move: newState.pokemon2.moves[pokemon2MoveKey]
+    })
+  );
   
   // Execute first attack
   newState = executeAttack(
@@ -217,8 +313,7 @@ export function executeTurn(state, pokemon1MoveKey, pokemon2MoveKey) {
   if (!newState.battleOver) {
     newState = {
       ...newState,
-      turn: newState.turn + 1,
-      log: [...newState.log, `Turn ${newState.turn + 1} begins!`]
+      turn: newState.turn + 1
     };
   }
   
@@ -252,7 +347,7 @@ export function selectRandomMove(pokemon) {
  */
 export function isValidBattleState(state) {
   // Check if all required properties exist
-  const requiredProps = ['pokemon1', 'pokemon2', 'turn', 'log', 'battleOver'];
+  const requiredProps = ['pokemon1', 'pokemon2', 'turn', 'battleOver'];
   for (const prop of requiredProps) {
     if (!(prop in state)) {
       return false;

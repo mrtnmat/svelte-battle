@@ -1,5 +1,5 @@
 import { STAB_BONUS } from "../Constants"
-import { typeEffectiveness } from "../data/TypeEffectiveness"
+import { typeEffectiveness } from "../core/Types"
 
 const effectivness = ({atkType, defType}) => typeEffectiveness[atkType][defType]
 const randomFactor = () => (Math.random() * 15 + 85) / 100

@@ -1,64 +1,35 @@
 <script>
-  import { createPokemon } from "../PokemonFactory.js";
+  import { createPokemon } from "../core/PokemonFactory.js";
   import PokemonCard from "../components/PokemonCard.svelte";
   import BattleLog from "../components/BattleLog.svelte";
-  import { executeTurn } from "../BattleMechanics.js";
   import { changeScene, SCENES } from "./SceneManager.svelte.js";
+  import * as SingleBattle from "../modes/SingleBattle.js";
 
-  // Create initial state function
-  function createInitialState() {
-    return {
-      pokemon1: createPokemon("Pikachu", 15),
-      pokemon2: createPokemon("Bulbasaur", 5),
-      turn: 1,
-      log: ["Battle started! Select moves for both Pokémon."],
-      battleOver: false
-    };
-  }
+  // Create initial state with default Pokémon
+  let gameState = $state(
+    SingleBattle.createInitialState(
+      createPokemon("Pikachu", 15),
+      createPokemon("Bulbasaur", 5),
+    ),
+  );
 
-  // Main game state
-  let gameState = $state(createInitialState());
-  
-  // UI state for selected moves (not part of game state)
-  let moveSelections = $state({
-    pokemon1: null,
-    pokemon2: null
-  });
+  // Track battle state and UI state with $derived
+  let battleState = $derived(gameState.battle);
+  let uiState = $derived(gameState.ui);
 
   // Computed property for move selection status
   let bothMovesSelected = $derived(
-    moveSelections.pokemon1 !== null && 
-    moveSelections.pokemon2 !== null
+    SingleBattle.areBothMovesSelected(gameState),
   );
 
-  // Handle move selection (UI state only)
-  function handleMoveSelect(pokemonId, moveIndex) {
-    moveSelections[pokemonId] = moveIndex;
-    
-    // If both moves are selected, automatically execute the turn
-    if (pokemonId === "pokemon1" && moveSelections.pokemon2 !== null ||
-        pokemonId === "pokemon2" && moveSelections.pokemon1 !== null) {
-      handleExecuteTurn();
-    }
+  // Handle move selection
+  function handleMoveSelect(pokemonId, moveKey) {
+    gameState = SingleBattle.selectMove(gameState, pokemonId, moveKey);
   }
 
-  // Handle turn execution
-  function handleExecuteTurn() {
-    // Execute turn with the selected moves
-    const newState = executeTurn(
-      { ...gameState }, 
-      moveSelections.pokemon1, 
-      moveSelections.pokemon2
-    );
-    
-    // Update game state with results
-    Object.assign(gameState, newState);
-    
-    // Reset move selections for next turn if battle continues
-    if (!newState.battleOver) {
-      moveSelections.pokemon1 = null;
-      moveSelections.pokemon2 = null;
-    }
+  // Reset battle
+  function handleReset() {
+    gameState = SingleBattle.resetBattle(gameState);
   }
 </script>
 
@@ -73,37 +44,31 @@
     </button>
   </div>
 
-  <!-- Pokémon 1 (Pikachu) -->
+  <!-- Pokémon 1 (Player) -->
   <PokemonCard
-    pokemon={gameState.pokemon1}
-    highlightedMove={moveSelections.pokemon1}
+    pokemon={battleState.pokemon1}
+    highlightedMove={uiState.selectedMoves.pokemon1}
     color="blue"
-    battleOver={gameState.battleOver}
-    onMoveSelect={(moveIndex) => handleMoveSelect("pokemon1", moveIndex)}
+    battleOver={battleState.battleOver}
+    onMoveSelect={(moveKey) => handleMoveSelect("pokemon1", moveKey)}
   />
 
-  <!-- Pokémon 2 (Bulbasaur) -->
+  <!-- Pokémon 2 (Opponent) -->
   <PokemonCard
-    pokemon={gameState.pokemon2}
-    highlightedMove={moveSelections.pokemon2}
+    pokemon={battleState.pokemon2}
+    highlightedMove={uiState.selectedMoves.pokemon2}
     color="green"
-    battleOver={gameState.battleOver}
-    onMoveSelect={(moveIndex) => handleMoveSelect("pokemon2", moveIndex)}
+    battleOver={battleState.battleOver}
+    onMoveSelect={(moveKey) => handleMoveSelect("pokemon2", moveKey)}
   />
-
-  <!-- Execute button removed as it's now automatic -->
 
   <!-- Battle log -->
-  <BattleLog messages={gameState.log} />
+  <BattleLog messages={battleState.log} />
 
-  {#if gameState.battleOver}
+  {#if battleState.battleOver}
     <button
       class="w-full p-2 bg-blue-500 hover:bg-blue-600 text-white rounded mt-4"
-      onclick={() => {
-        gameState = createInitialState();
-        moveSelections.pokemon1 = null;
-        moveSelections.pokemon2 = null;
-      }}
+      onclick={handleReset}
     >
       New Battle
     </button>

@@ -1,13 +1,14 @@
 <script>
+  // Props for the component
   let {
     pokemon,
     color = "blue",
     battleOver = false,
-    onMoveSelect = (moveSlot) => {},
+    onMoveSelect = (moveKey) => {},
     highlightedMove = null,
   } = $props();
 
-  // Using $derived to compute color classes
+  // Calculate color classes based on the color prop
   let colorClasses = $derived(
     {
       blue: {
@@ -30,17 +31,24 @@
       },
     }[color],
   );
+
+  // Calculate HP percentage for the health bar
+  let hpPercentage = $derived(
+    Math.max(0, Math.min(100, (pokemon.hp / pokemon.maxHp) * 100)),
+  );
 </script>
 
 <div class="p-3 rounded-md mb-4 {colorClasses.bg}">
   <div class="flex justify-between items-center">
     <span class="font-bold">{pokemon.name}</span>
-    <span>{pokemon.hp}/{pokemon.maxHp} HP</span>
+    <span>Lv.{pokemon.level} - {pokemon.hp}/{pokemon.maxHp} HP</span>
   </div>
-  
+
   <div class="flex flex-wrap gap-1 mt-1 mb-1">
     {#each pokemon.types as type}
-      <span class="text-xs px-2 py-0.5 rounded-full bg-gray-200 text-gray-800 font-semibold">
+      <span
+        class="text-xs px-2 py-0.5 rounded-full bg-gray-200 text-gray-800 font-semibold"
+      >
         {type}
       </span>
     {/each}
@@ -49,7 +57,7 @@
   <div class="w-full bg-gray-200 h-2 mt-1 rounded-full">
     <div
       class="{colorClasses.bar} h-2 rounded-full"
-      style="width: {(pokemon.hp / pokemon.maxHp) * 100}%"
+      style="width: {hpPercentage}%"
     ></div>
   </div>
 
@@ -59,18 +67,18 @@
     <div>Sp.Atk: {pokemon.specialAttack}</div>
     <div>Sp.Def: {pokemon.specialDefense}</div>
     <div>Speed: {pokemon.speed}</div>
-    <div>Level: {pokemon.level}</div>
   </div>
 
   {#if !battleOver}
     <div class="mt-2 grid grid-cols-2 gap-2">
-      {#each Object.entries(pokemon.moves) as [moveSlot, move]}
+      {#each Object.entries(pokemon.moves) as [moveKey, move]}
         <button
-          class="p-2 text-white rounded {colorClasses.button} {move.ppRemaining <= 0
+          class="p-2 text-white rounded {colorClasses.button} {move.ppRemaining <=
+          0
             ? 'opacity-50 cursor-not-allowed'
             : ''} 
-                {highlightedMove === moveSlot ? 'ring-2 ring-yellow-400' : ''}"
-          onclick={() => onMoveSelect(moveSlot)}
+                {highlightedMove === moveKey ? 'ring-2 ring-yellow-400' : ''}"
+          onclick={() => onMoveSelect(moveKey)}
           disabled={move.ppRemaining <= 0}
         >
           <div>{move.name}</div>
@@ -82,5 +90,4 @@
       {/each}
     </div>
   {/if}
-
 </div>

@@ -1,3 +1,9 @@
+/**
+ * Types system for Pokémon battles
+ * 
+ * This module contains type definitions and effectiveness calculations.
+ */
+
 // Define type effectiveness chart
 export const typeEffectiveness = {
   Normal: {
@@ -24,4 +30,52 @@ export const typeEffectiveness = {
     Normal: 1, Fire: 1, Water: 1, Electric: 1, Grass: 2, Ice: 1, Fighting: 1, Poison: 0.5,
     Ground: 0.5, Flying: 1, Psychic: 1, Bug: 1, Rock: 0.5, Ghost: 0.5, Dragon: 1, Dark: 1, Steel: 0, Fairy: 2
   }
+};
+
+/**
+ * Calculate the effectiveness multiplier of a move against a defender
+ */
+export function calculateTypeEffectiveness(moveType, defenderTypes) {
+  if (!typeEffectiveness[moveType]) {
+    return 1; // Default to neutral if move type not found
+  }
+  
+  let multiplier = 1;
+  
+  for (const defenderType of defenderTypes) {
+    if (typeEffectiveness[moveType][defenderType]) {
+      multiplier *= typeEffectiveness[moveType][defenderType];
+    }
+  }
+  
+  return multiplier;
+}
+
+/**
+ * Get a descriptive string for type effectiveness
+ */
+export function getTypeEffectivenessDescription(effectiveness) {
+  if (effectiveness > 1) {
+    return "super effective";
+  } else if (effectiveness < 1 && effectiveness > 0) {
+    return "not very effective";
+  } else if (effectiveness === 0) {
+    return "no effect";
+  } else {
+    return "effective"; // neutral
+  }
+}
+
+/**
+ * Get all available types
+ */
+export function getAllTypes() {
+  return Object.keys(typeEffectiveness);
+}
+
+/**
+ * Check if a type is valid
+ */
+export function isValidType(type) {
+  return type in typeEffectiveness;
 }

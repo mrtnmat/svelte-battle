@@ -8,14 +8,14 @@
   <div class="space-y-4">
     <button
       class="w-full p-3 bg-blue-500 hover:bg-blue-600 text-white rounded-md"
-      on:click={() => changeScene(SCENES.BATTLE)}
+      onclick={() => changeScene(SCENES.BATTLE)}
     >
       Single Battle
     </button>
 
     <button
       class="w-full p-3 bg-green-500 hover:bg-green-600 text-white rounded-md"
-      on:click={() => changeScene(SCENES.GAUNTLET)}
+      onclick={() => changeScene(SCENES.GAUNTLET)}
     >
       Gauntlet Mode
     </button>

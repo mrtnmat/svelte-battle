@@ -249,9 +249,19 @@ export const moveList = {
     statusEffect: 'Paralysis',
     execute: MoveEffects.statusMove
   }),
-  
-  // Advanced moves - now directly imported from MoveEffects
-  
+
+  'Withdraw': createMove({
+    name: 'Withdraw',
+    power: 0,
+    pp: 15,
+    category: 'Status',
+    type: 'Water',
+    description: 'The user withdraws into its shell, raising its Defense stat.',
+    statToBoost: 'defense',
+    boostAmount: 1,
+    execute: MoveEffects.statBoostSelf
+  }),
+
   // Moves with recoil damage
   'Double-Edge': createMove({
     name: 'Double-Edge',
@@ -264,7 +274,7 @@ export const moveList = {
     recoilPercent: 0.33, // 1/3 of damage dealt
     execute: MoveEffects.recoilAttack
   }),
-  
+
   // Multi-hit moves
   'Pin Missile': createMove({
     name: 'Pin Missile',
@@ -276,7 +286,7 @@ export const moveList = {
     description: 'Sharp spikes are shot at the target in rapid succession. Hits 2-5 times.',
     execute: MoveEffects.multiHitAttack
   }),
-  
+
   // Moves with secondary effects
   'Fire Punch': createMove({
     name: 'Fire Punch',
@@ -291,7 +301,7 @@ export const moveList = {
     secondaryEffectChance: 10, // 10% chance to burn
     execute: MoveEffects.secondaryEffectAttack
   }),
-  
+
   // Vampiric moves
   'Giga Drain': createMove({
     name: 'Giga Drain',
@@ -304,7 +314,7 @@ export const moveList = {
     healPercent: 50, // 50% of damage dealt
     execute: MoveEffects.vampiricAttack
   }),
-  
+
   // Combo moves
   'Swords Dance': createMove({
     name: 'Swords Dance',
@@ -328,7 +338,7 @@ export const moveList = {
     },
     execute: MoveEffects.comboMove
   }),
-  
+
   // Counter move
   'Counter': createMove({
     name: 'Counter',
@@ -340,7 +350,7 @@ export const moveList = {
     description: 'A retaliation move that counters any physical attack, inflicting double the damage taken.',
     execute: MoveEffects.counterMove
   }),
-  
+
   // Additional stat-lowering moves using our new function
   'Tail Whip': createMove({
     name: 'Tail Whip',
@@ -353,7 +363,7 @@ export const moveList = {
     reduction: 0.75,
     execute: MoveEffects.statLowerTarget
   }),
-  
+
   'Leer': createMove({
     name: 'Leer',
     power: 0,
@@ -365,7 +375,7 @@ export const moveList = {
     reduction: 0.75,
     execute: MoveEffects.statLowerTarget
   }),
-  
+
   'String Shot': createMove({
     name: 'String Shot',
     power: 0,

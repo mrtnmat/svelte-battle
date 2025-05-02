@@ -5,12 +5,9 @@
  */
 
 import { createBattleState, executeTurn, selectRandomMove } from '../core/BattleEngine.js';
-import { createPokemon } from '../core/PokemonFactory.js';
+import { createPokemon, levelUp } from '../core/PokemonFactory.js';
 import { initializeBattleLog, addCustomLogMessage } from '../services/BattleLogManager.js';
 import { writable } from 'svelte/store';
-
-// Create a specific store for the gauntlet log
-export const gauntletLog = writable([]);
 
 /**
  * Create initial state for gauntlet mode
@@ -19,17 +16,19 @@ export function createInitialState(playerPokemon) {
     // Initialize the battle log
     initializeBattleLog();
     
-    // Reset gauntlet log
-    gauntletLog.set(["Welcome to Gauntlet Mode! Defeat as many Pokémon as you can!"]);
-    
     // Use provided Pokémon or create default
-    const player = playerPokemon || createPokemon("Pikachu", 15);
+    const player = playerPokemon || createPokemon("Pikachu", 5);
 
     return {
         // Gauntlet state (persists between battles)
         gauntlet: {
             playerPokemon: player,
-            defeatedCount: 0
+            defeatedCount: 0,
+            totalXP: 0,
+            battleHistory: [
+                { message: `Gauntlet challenge started with ${player.name} (Lv. ${player.level})!` }
+            ],
+            rewards: []
         },
 
         // Current battle state (null until first battle generated)
@@ -43,10 +42,18 @@ export function createInitialState(playerPokemon) {
 }
 
 /**
- * Add a message to the gauntlet log
+ * Add a battle record to the history
  */
-function addGauntletLogMessage(message) {
-    gauntletLog.update(log => [...log, message]);
+function addBattleRecord(state, record) {
+    const newState = {
+        ...state,
+        gauntlet: {
+            ...state.gauntlet,
+            battleHistory: [...state.gauntlet.battleHistory, record]
+        }
+    };
+    
+    return newState;
 }
 
 /**
@@ -56,10 +63,12 @@ export function generateNextBattle(state) {
     const { gauntlet } = state;
 
     // For each battle, increase the enemy level slightly
-    const enemyLevel = 5 + Math.floor(gauntlet.defeatedCount / 2);
+    const baseLevel = Math.max(5, Math.floor(gauntlet.playerPokemon.level * 0.8));
+    const levelVariation = Math.floor(Math.random() * 3) - 1; // -1, 0, or +1
+    const enemyLevel = baseLevel + levelVariation;
 
     // Randomly select enemy species from available Pokémon
-    const enemyOptions = ["Bulbasaur", "Charmander", "Squirtle"];
+    const enemyOptions = ["Bulbasaur", "Charmander", "Squirtle", "Abra"];
     const enemySpecies = enemyOptions[Math.floor(Math.random() * enemyOptions.length)];
 
     // Create enemy Pokémon
@@ -69,13 +78,21 @@ export function generateNextBattle(state) {
     const battleState = createBattleState(gauntlet.playerPokemon, enemyPokemon);
 
     // Add custom log message
-    addCustomLogMessage(`Battle started against ${enemyPokemon.name}! Select a move.`);
+    addCustomLogMessage(`Battle #${gauntlet.defeatedCount + 1}: ${gauntlet.playerPokemon.name} (Lv. ${gauntlet.playerPokemon.level}) vs ${enemyPokemon.name} (Lv. ${enemyPokemon.level})!`);
+    addCustomLogMessage(`Select a move to attack.`);
 
-    // Update gauntlet log
-    addGauntletLogMessage(`Battle #${gauntlet.defeatedCount + 1}: ${gauntlet.playerPokemon.name} vs ${enemyPokemon.name}`);
+    // Add to battle history
+    const updatedState = addBattleRecord(state, {
+        battleNumber: gauntlet.defeatedCount + 1,
+        enemy: {
+            name: enemyPokemon.name,
+            level: enemyPokemon.level
+        },
+        message: `Battle #${gauntlet.defeatedCount + 1}: vs ${enemyPokemon.name} (Lv. ${enemyPokemon.level})`
+    });
 
     return {
-        ...state,
+        ...updatedState,
         battle: battleState,
         ui: {
             selectedMove: null
@@ -149,6 +166,29 @@ function executeBattleTurn(state) {
 }
 
 /**
+ * Calculate XP gained from defeating an opponent
+ */
+function calculateXPGain(winnerLevel, defenderLevel) {
+    // Base XP is defender's level
+    const baseXP = defenderLevel;
+    
+    // Apply a level difference modifier
+    const levelDifference = defenderLevel - winnerLevel;
+    let modifier = 1.0;
+    
+    if (levelDifference > 0) {
+        // Bonus for defeating higher level Pokémon
+        modifier = 1.0 + (levelDifference * 0.1);
+    } else if (levelDifference < 0) {
+        // Reduced XP for defeating lower level Pokémon
+        modifier = Math.max(0.5, 1.0 + (levelDifference * 0.05));
+    }
+    
+    // Calculate final XP
+    return Math.max(1, Math.round(baseXP * modifier));
+}
+
+/**
  * Handle the end of a battle in gauntlet mode
  */
 function handleBattleEnd(state, battleState) {
@@ -157,13 +197,17 @@ function handleBattleEnd(state, battleState) {
     // Check who won
     if (battleState.pokemon1.hp <= 0) {
         // Player lost - game over
-        addGauntletLogMessage(`Game Over! You defeated ${gauntlet.defeatedCount} opponents.`);
+        addCustomLogMessage(`Game Over! ${battleState.pokemon1.name} was defeated after winning ${gauntlet.defeatedCount} battles.`);
+
+        // Add to battle history
+        const updatedState = addBattleRecord(state, {
+            result: 'defeat',
+            message: `${battleState.pokemon1.name} was defeated by ${battleState.pokemon2.name}.`,
+            finalScore: gauntlet.defeatedCount
+        });
 
         return {
-            ...state,
-            gauntlet: {
-                ...gauntlet
-            },
+            ...updatedState,
             battle: battleState,
             ui: {
                 selectedMove: null
@@ -171,16 +215,68 @@ function handleBattleEnd(state, battleState) {
         };
     } else {
         // Player won - prepare for next battle
+        const xpGained = calculateXPGain(
+            battleState.pokemon1.level, 
+            battleState.pokemon2.level
+        );
+
+        const totalXP = gauntlet.totalXP + xpGained;
+        
+        // Determine if leveling up
+        const shouldLevelUp = battleState.pokemon1.level < 100 && 
+            (totalXP >= battleState.pokemon1.level * 5);
+        
+        let updatedPokemon = healPlayerAfterVictory(battleState.pokemon1);
+        let levelUpMessage = null;
+        
+        if (shouldLevelUp) {
+            // Level up the Pokémon
+            const oldLevel = updatedPokemon.level;
+            updatedPokemon = levelUp(updatedPokemon);
+            levelUpMessage = `${updatedPokemon.name} grew to level ${updatedPokemon.level}!`;
+            
+            // Add message about level up
+            addCustomLogMessage(levelUpMessage);
+        }
+        
+        // Add victory message to log
+        addCustomLogMessage(`${updatedPokemon.name} defeated ${battleState.pokemon2.name} and gained ${xpGained} XP!`);
+
+        // Update gauntlet state
         const updatedGauntlet = {
             ...gauntlet,
             defeatedCount: gauntlet.defeatedCount + 1,
-            playerPokemon: healPlayerAfterVictory(battleState.pokemon1)
+            totalXP: shouldLevelUp ? 0 : totalXP, // Reset XP after level up
+            playerPokemon: updatedPokemon,
+            rewards: [...gauntlet.rewards, {
+                type: 'xp',
+                amount: xpGained
+            }]
         };
         
-        addGauntletLogMessage(`You defeated ${battleState.pokemon2.name}! Total victories: ${updatedGauntlet.defeatedCount}`);
+        // Add to battle history
+        let updatedState = addBattleRecord(state, {
+            result: 'victory',
+            enemy: {
+                name: battleState.pokemon2.name,
+                level: battleState.pokemon2.level
+            },
+            rewards: {
+                xp: xpGained,
+                levelUp: shouldLevelUp
+            },
+            message: `Defeated ${battleState.pokemon2.name} (Lv. ${battleState.pokemon2.level})! XP: +${xpGained}`
+        });
+
+        if (levelUpMessage) {
+            updatedState = addBattleRecord(updatedState, {
+                type: 'level-up',
+                message: levelUpMessage
+            });
+        }
 
         const newState = {
-            ...state,
+            ...updatedState,
             gauntlet: updatedGauntlet,
             battle: battleState,
             ui: {
@@ -207,19 +303,24 @@ function healPlayerAfterVictory(pokemon) {
     };
 
     // Add message about healing
-    addCustomLogMessage(`${pokemon.name} recovered ${healAmount} HP!`);
+    if (healAmount > 0) {
+        addCustomLogMessage(`${pokemon.name} recovered ${healAmount} HP!`);
+    }
 
     // Partial PP restore (1 PP per move)
     const refreshedMoves = {};
 
     for (const [key, move] of Object.entries(pokemon.moves)) {
+        const ppRestored = Math.min(1, move.pp - move.ppRemaining);
         refreshedMoves[key] = {
             ...move,
-            ppRemaining: Math.min(move.pp, move.ppRemaining + 1)
+            ppRemaining: Math.min(move.pp, move.ppRemaining + ppRestored)
         };
     }
     
-    addCustomLogMessage(`${pokemon.name}'s moves recovered 1 PP each!`);
+    if (Object.values(pokemon.moves).some(move => move.ppRemaining < move.pp)) {
+        addCustomLogMessage(`${pokemon.name}'s moves recovered 1 PP each!`);
+    }
 
     return {
         ...healedPokemon,
@@ -233,7 +334,7 @@ function healPlayerAfterVictory(pokemon) {
 export function resetGauntlet(state) {
     // Keep the same player Pokémon type but fully heal and refresh
     const playerPokemon = state.gauntlet.playerPokemon;
-    const freshPokemon = createPokemon(playerPokemon.name, playerPokemon.level);
+    const freshPokemon = createPokemon(playerPokemon.name, 5);
 
     // Add message about reset
     addCustomLogMessage("Starting a new gauntlet challenge!");

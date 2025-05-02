@@ -5,6 +5,7 @@
  */
 
 import { moveList, createMoveInstance } from './Moves.js';
+import { getBestMoves } from './Movesets.js';
 
 // Base stats for each Pokémon species
 const pokemonBaseStats = {
@@ -15,8 +16,7 @@ const pokemonBaseStats = {
     specialAttack: 50,
     specialDefense: 40,
     speed: 90,
-    types: ["Electric"],
-    availableMoves: ["Tackle", "Thundershock", "Thunderbolt", "Swift", "Thunder Wave"]
+    types: ["Electric"]
   },
   Bulbasaur: {
     hp: 45,
@@ -25,8 +25,7 @@ const pokemonBaseStats = {
     specialAttack: 65,
     specialDefense: 65,
     speed: 45,
-    types: ["Grass", "Poison"],
-    availableMoves: ["Tackle", "Vine Whip", "Razor Leaf", "Growth", "Growl"]
+    types: ["Grass", "Poison"]
   },
   Charmander: {
     hp: 39,
@@ -35,8 +34,7 @@ const pokemonBaseStats = {
     specialAttack: 60,
     specialDefense: 50,
     speed: 65,
-    types: ["Fire"],
-    availableMoves: ["Scratch", "Ember", "Flamethrower", "Growl", "Metronome"]
+    types: ["Fire"]
   },
   Squirtle: {
     hp: 44,
@@ -45,8 +43,7 @@ const pokemonBaseStats = {
     specialAttack: 50,
     specialDefense: 64,
     speed: 43,
-    types: ["Water"],
-    availableMoves: ["Tackle", "Water Gun", "Bubble Beam", "Withdraw", "Recover"]
+    types: ["Water"]
   },
   Abra: {
     hp: 25,
@@ -55,8 +52,7 @@ const pokemonBaseStats = {
     specialAttack: 105,
     specialDefense: 55,
     speed: 90,
-    types: ["Psychic"],
-    availableMoves: ["Psyshock", "Metronome", "Recover", "Thunder Wave", "Growth"]
+    types: ["Psychic"]
   }
 };
 
@@ -93,16 +89,20 @@ export function createPokemon(species, level, options = {}) {
   const speed = calculateStat(baseStats.speed, level);
   
   // Determine which moves to include
-  const moveKeys = options.moveKeys || baseStats.availableMoves.slice(0, 4);
+  const moveKeys = options.moveKeys;
+  
+  // Use provided moves, or get level-appropriate moves if none provided
+  const moveNames = moveKeys || getBestMoves(species, level);
   
   // Create moves object with PP
   const moves = {};
-  moveKeys.forEach((moveName, index) => {
+  moveNames.forEach((moveName, index) => {
     const moveKey = `Move ${index + 1}`;
     const move = moveList[moveName];
     
     if (!move) {
-      throw new Error(`Unknown move: ${moveName}`);
+      console.warn(`Unknown move: ${moveName} for ${species}`);
+      return;
     }
     
     moves[moveKey] = createMoveInstance(move);
@@ -199,6 +199,40 @@ export function levelUp(pokemon, levels = 1) {
   const newSpecialDefense = calculateStat(baseStats.specialDefense, newLevel);
   const newSpeed = calculateStat(baseStats.speed, newLevel);
   
+  // Get new moves for the level
+  const currentMoveNames = Object.values(pokemon.moves).map(move => move.name);
+  const availableMoveNames = getBestMoves(species, newLevel);
+  
+  // Keep track of new moves learned
+  const newMovesLearned = availableMoveNames.filter(move => !currentMoveNames.includes(move));
+  
+  // Create updated moves object
+  const updatedMoves = {};
+  let moveCount = 0;
+  
+  // First add existing moves
+  for (const [key, move] of Object.entries(pokemon.moves)) {
+    if (moveCount < 4) {
+      updatedMoves[key] = { ...move };
+      moveCount++;
+    }
+  }
+  
+  // Then add new moves, replacing oldest if needed
+  for (const moveName of newMovesLearned) {
+    if (moveCount < 4) {
+      // Add new move to an empty slot
+      updatedMoves[`Move ${moveCount + 1}`] = createMoveInstance(moveList[moveName]);
+      moveCount++;
+    } else {
+      // Replace the oldest move (Move 1) and shift others
+      for (let i = 1; i < 4; i++) {
+        updatedMoves[`Move ${i}`] = updatedMoves[`Move ${i + 1}`];
+      }
+      updatedMoves['Move 4'] = createMoveInstance(moveList[moveName]);
+    }
+  }
+  
   // Return upgraded Pokémon
   return {
     ...pokemon,
@@ -209,7 +243,8 @@ export function levelUp(pokemon, levels = 1) {
     defense: newDefense,
     specialAttack: newSpecialAttack,
     specialDefense: newSpecialDefense,
-    speed: newSpeed
+    speed: newSpeed,
+    moves: updatedMoves
   };
 }
 

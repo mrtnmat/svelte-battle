@@ -9,6 +9,47 @@ import { moveList } from './Moves.js';
 import { battleEvents, BATTLE_EVENTS, createEventData } from './EventSystem.js';
 
 /**
+ * Performs a deep clone of an object while preserving functions
+ * @param {Object} obj - The object to clone
+ * @returns {Object} A deep clone with functions preserved
+ */
+function deepCloneWithFunctions(obj) {
+  if (obj === null || typeof obj !== 'object') {
+    return obj;
+  }
+
+  // Handle Date, RegExp, etc.
+  if (obj instanceof Date) {
+    return new Date(obj);
+  }
+  
+  if (obj instanceof RegExp) {
+    return new RegExp(obj);
+  }
+  
+  // Create a new object/array
+  const clone = Array.isArray(obj) ? [] : {};
+  
+  // Copy each property
+  for (const key in obj) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+      if (typeof obj[key] === 'function') {
+        // Preserve functions
+        clone[key] = obj[key];
+      } else if (typeof obj[key] === 'object' && obj[key] !== null) {
+        // Recursively clone nested objects
+        clone[key] = deepCloneWithFunctions(obj[key]);
+      } else {
+        // Copy primitive values
+        clone[key] = obj[key];
+      }
+    }
+  }
+  
+  return clone;
+}
+
+/**
  * Creates an initial battle state with two Pokémon
  */
 export function createBattleState(pokemon1, pokemon2) {
@@ -38,7 +79,7 @@ export function createBattleState(pokemon1, pokemon2) {
  */
 export function processStatusEffects(state) {
   // Create a deep copy of the state to avoid mutations
-  const newState = JSON.parse(JSON.stringify(state));
+  const newState = deepCloneWithFunctions(state);
   
   // Process status effects for both Pokémon
   ['pokemon1', 'pokemon2'].forEach(pokemonKey => {
@@ -103,7 +144,7 @@ export function processStatusEffects(state) {
  */
 export function executeAttack(state, attackerId, defenderId, moveKey) {
   // Create a deep copy of the state to avoid mutations
-  const newState = JSON.parse(JSON.stringify(state));
+  const newState = deepCloneWithFunctions(state);
   const attacker = newState[attackerId];
   const defender = newState[defenderId];
   
@@ -181,6 +222,29 @@ export function executeAttack(state, attackerId, defenderId, moveKey) {
     })
   );
   
+  // Check if move.execute exists before calling it
+  if (typeof move.execute !== 'function') {
+    console.error(`Move ${move.name} does not have an execute function!`, move);
+    
+    // If execute is missing, try to restore it from the moveList
+    if (moveList[move.name] && typeof moveList[move.name].execute === 'function') {
+      move.execute = moveList[move.name].execute;
+      console.log(`Restored execute function for ${move.name} from moveList`);
+    } else {
+      // Fallback to a no-op
+      battleEvents.emit(
+        BATTLE_EVENTS.MOVE_FAILED,
+        createEventData(BATTLE_EVENTS.MOVE_FAILED, {
+          pokemon: attacker,
+          move,
+          reason: 'execute-function-missing'
+        })
+      );
+      
+      return newState;
+    }
+  }
+  
   // Execute the move's custom code
   const result = move.execute({
     attacker,
@@ -240,7 +304,7 @@ export function executeAttack(state, attackerId, defenderId, moveKey) {
  * Execute a turn with moves from both Pokémon
  */
 export function executeTurn(state, pokemon1MoveKey, pokemon2MoveKey) {
-  let newState = { ...state };
+  let newState = deepCloneWithFunctions(state);
   
   // Check if battle is already over
   if (newState.battleOver) {

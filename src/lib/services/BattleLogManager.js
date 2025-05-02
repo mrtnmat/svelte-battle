@@ -67,19 +67,34 @@ function setupEventListeners() {
       }
     } else {
       addLogMessage(`${event.pokemon.name} used ${event.move.name}!`);
-      addLogMessage(`${event.move.name} is a ${event.move.type}-type ${event.move.category} move!`);
-
-      if (event.move.category === 'Physical') {
-        addLogMessage(`Used ${event.pokemon.name}'s Attack (${event.pokemon.attack}) against ${event.target.name}'s Defense (${event.target.defense})!`);
-      } else if (event.move.category === 'Special') {
-        addLogMessage(`Used ${event.pokemon.name}'s Special Attack (${event.pokemon.specialAttack}) against ${event.target.name}'s Special Defense (${event.target.specialDefense})!`);
-      }
     }
   });
   unsubscribeFunctions.push(unsubMoveUsed);
 
+  // Move missed
+  const unsubMoveMissed = battleEvents.on(BATTLE_EVENTS.MOVE_MISSED, (event) => {
+    addLogMessage(`${event.pokemon.name}'s attack missed!`);
+  });
+  unsubscribeFunctions.push(unsubMoveMissed);
+
+  // Metronome selected
+  const unsubMetronomeSelected = battleEvents.on(BATTLE_EVENTS.METRONOME_SELECTED, (event) => {
+    addLogMessage(`Metronome selected ${event.selectedMove}!`);
+  });
+  unsubscribeFunctions.push(unsubMetronomeSelected);
+
   // Damage calculated
   const unsubDamageCalc = battleEvents.on(BATTLE_EVENTS.DAMAGE_CALCULATED, (event) => {
+    // Log move details
+    addLogMessage(`${event.move.name} is a ${event.move.type}-type ${event.move.category} move!`);
+    
+    // Log stat usage
+    if (event.move.category === 'Physical') {
+      addLogMessage(`Used ${event.attacker.name}'s Attack (${event.attacker.attack}) against ${event.defender.name}'s Defense (${event.defender.defense})!`);
+    } else if (event.move.category === 'Special') {
+      addLogMessage(`Used ${event.attacker.name}'s Special Attack (${event.attacker.specialAttack}) against ${event.defender.name}'s Special Defense (${event.defender.specialDefense})!`);
+    }
+    
     // Log STAB bonus
     if (event.stabModifier > 1) {
       addLogMessage(`It's ${event.attacker.name}'s same type! Attack power increased by 50%!`);
@@ -101,6 +116,56 @@ function setupEventListeners() {
     addLogMessage(`${event.pokemon.name} took ${event.damageAmount} damage!`);
   });
   unsubscribeFunctions.push(unsubDamageApplied);
+
+  // Healing applied
+  const unsubHealingApplied = battleEvents.on(BATTLE_EVENTS.HEALING_APPLIED, (event) => {
+    addLogMessage(`${event.pokemon.name} recovered ${event.healAmount} HP!`);
+  });
+  unsubscribeFunctions.push(unsubHealingApplied);
+
+  // Status effect applied
+  const unsubStatusApplied = battleEvents.on(BATTLE_EVENTS.STATUS_EFFECT_APPLIED, (event) => {
+    addLogMessage(`${event.pokemon.name} was afflicted with ${event.statusEffect}!`);
+  });
+  unsubscribeFunctions.push(unsubStatusApplied);
+
+  // Status effect removed
+  const unsubStatusRemoved = battleEvents.on(BATTLE_EVENTS.STATUS_EFFECT_REMOVED, (event) => {
+    addLogMessage(`${event.pokemon.name} recovered from ${event.statusEffect}!`);
+  });
+  unsubscribeFunctions.push(unsubStatusRemoved);
+
+  // Stat boosted
+  const unsubStatBoosted = battleEvents.on(BATTLE_EVENTS.STAT_BOOSTED, (event) => {
+    // Convert stat name to display name
+    const statDisplayNames = {
+      'attack': 'Attack',
+      'defense': 'Defense',
+      'specialAttack': 'Special Attack',
+      'specialDefense': 'Special Defense',
+      'speed': 'Speed'
+    };
+    const displayName = statDisplayNames[event.stat] || event.stat;
+    
+    addLogMessage(`${event.pokemon.name}'s ${displayName} rose!`);
+  });
+  unsubscribeFunctions.push(unsubStatBoosted);
+
+  // Stat lowered
+  const unsubStatLowered = battleEvents.on(BATTLE_EVENTS.STAT_LOWERED, (event) => {
+    // Convert stat name to display name
+    const statDisplayNames = {
+      'attack': 'Attack',
+      'defense': 'Defense',
+      'specialAttack': 'Special Attack',
+      'specialDefense': 'Special Defense',
+      'speed': 'Speed'
+    };
+    const displayName = statDisplayNames[event.stat] || event.stat;
+    
+    addLogMessage(`${event.pokemon.name}'s ${displayName} fell!`);
+  });
+  unsubscribeFunctions.push(unsubStatLowered);
 
   // Pokémon fainted
   const unsubPokemonFainted = battleEvents.on(BATTLE_EVENTS.POKEMON_FAINTED, (event) => {

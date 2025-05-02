@@ -16,7 +16,7 @@ const pokemonBaseStats = {
     specialDefense: 40,
     speed: 90,
     types: ["Electric"],
-    availableMoves: ["Tackle", "Thundershock", "Thunderbolt"]
+    availableMoves: ["Tackle", "Thundershock", "Thunderbolt", "Swift", "Thunder Wave"]
   },
   Bulbasaur: {
     hp: 45,
@@ -26,7 +26,7 @@ const pokemonBaseStats = {
     specialDefense: 65,
     speed: 45,
     types: ["Grass", "Poison"],
-    availableMoves: ["Tackle", "Vine Whip", "Razor Leaf"]
+    availableMoves: ["Tackle", "Vine Whip", "Razor Leaf", "Growth", "Growl"]
   },
   Charmander: {
     hp: 39,
@@ -36,7 +36,7 @@ const pokemonBaseStats = {
     specialDefense: 50,
     speed: 65,
     types: ["Fire"],
-    availableMoves: ["Scratch", "Ember", "Flamethrower"]
+    availableMoves: ["Scratch", "Ember", "Flamethrower", "Growl", "Metronome"]
   },
   Squirtle: {
     hp: 44,
@@ -46,7 +46,17 @@ const pokemonBaseStats = {
     specialDefense: 64,
     speed: 43,
     types: ["Water"],
-    availableMoves: ["Tackle", "Water Gun", "Bubble Beam"]
+    availableMoves: ["Tackle", "Water Gun", "Bubble Beam", "Withdraw", "Recover"]
+  },
+  Abra: {
+    hp: 25,
+    attack: 20,
+    defense: 15,
+    specialAttack: 105,
+    specialDefense: 55,
+    speed: 90,
+    types: ["Psychic"],
+    availableMoves: ["Psyshock", "Metronome", "Recover", "Thunder Wave", "Growth"]
   }
 };
 
@@ -111,6 +121,7 @@ export function createPokemon(species, level, options = {}) {
     speed,
     moves,
     types: baseStats.types,
+    statusEffects: {},  // Initialize with empty status effects
   };
 }
 
@@ -122,7 +133,8 @@ export function createStarters(level = 5) {
     Pikachu: createPokemon("Pikachu", level),
     Bulbasaur: createPokemon("Bulbasaur", level),
     Charmander: createPokemon("Charmander", level),
-    Squirtle: createPokemon("Squirtle", level)
+    Squirtle: createPokemon("Squirtle", level),
+    Abra: createPokemon("Abra", level)
   };
 }
 
@@ -133,6 +145,16 @@ export function healPokemon(pokemon) {
   return {
     ...pokemon,
     hp: pokemon.maxHp
+  };
+}
+
+/**
+ * Clear all status effects from a Pokémon
+ */
+export function cureStatusEffects(pokemon) {
+  return {
+    ...pokemon,
+    statusEffects: {}
   };
 }
 

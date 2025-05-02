@@ -3,6 +3,8 @@ export const SCENES = {
   MAIN_MENU: 'MAIN_MENU',
   BATTLE: 'BATTLE',
   GAUNTLET: 'GAUNTLET',
+  ADVANCED_BATTLE: 'ADVANCED_BATTLE',
+  ADVANCED_BATTLE_TEST: 'ADVANCED_BATTLE_TEST',
 };
 
 // Create a reactive state store

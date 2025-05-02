@@ -19,5 +19,23 @@
     >
       Gauntlet Mode
     </button>
+    
+    <button
+      class="w-full p-3 bg-purple-500 hover:bg-purple-600 text-white rounded-md"
+      onclick={() => changeScene(SCENES.ADVANCED_BATTLE)}
+    >
+      Advanced Battle
+    </button>
+    
+    <button
+      class="w-full p-3 bg-indigo-500 hover:bg-indigo-600 text-white rounded-md"
+      onclick={() => changeScene(SCENES.ADVANCED_BATTLE_TEST)}
+    >
+      Move Constructor
+    </button>
+  </div>
+  
+  <div class="mt-4 text-center text-sm text-gray-500">
+    <p>Version 0.2.0 - Advanced Moves System</p>
   </div>
 </div>

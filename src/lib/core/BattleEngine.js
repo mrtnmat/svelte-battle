@@ -5,7 +5,7 @@
  * It has no dependencies on UI or game mode-specific logic.
  */
 
-import { typeEffectiveness } from './Types.js';
+import { moveList } from './Moves.js';
 import { battleEvents, BATTLE_EVENTS, createEventData } from './EventSystem.js';
 
 /**
@@ -33,82 +33,69 @@ export function createBattleState(pokemon1, pokemon2) {
 }
 
 /**
- * Calculate damage for an attack
+ * Apply status effect processing
+ * This handles the status effects at the beginning of a turn
  */
-export function calculateDamage({ attacker, defender, move }) {
-  const levelDamage = ((attacker.level * 2 / 5) + 2);
+export function processStatusEffects(state) {
+  // Create a deep copy of the state to avoid mutations
+  const newState = JSON.parse(JSON.stringify(state));
   
-  // Use the correct stats based on move category
-  let attackStat, defenseStat;
-  
-  if (move.category === 'Physical') {
-    attackStat = attacker.attack;
-    defenseStat = defender.defense;
-  } else if (move.category === 'Special') {
-    attackStat = attacker.specialAttack;
-    defenseStat = defender.specialDefense;
-  }
-  
-  // Calculate STAB (Same Type Attack Bonus)
-  let stabModifier = 1;
-  if (attacker.types.includes(move.type)) {
-    stabModifier = 1.5;
-  }
-  
-  // Calculate type effectiveness
-  let typeModifier = 1;
-  if (typeEffectiveness[move.type]) {
-    defender.types.forEach(defenderType => {
-      if (typeEffectiveness[move.type][defenderType]) {
-        typeModifier *= typeEffectiveness[move.type][defenderType];
+  // Process status effects for both Pokémon
+  ['pokemon1', 'pokemon2'].forEach(pokemonKey => {
+    const pokemon = newState[pokemonKey];
+    
+    // Skip if Pokémon has no status effects
+    if (!pokemon.statusEffects) return;
+    
+    // Process each status effect
+    Object.keys(pokemon.statusEffects).forEach(effectName => {
+      const effect = pokemon.statusEffects[effectName];
+      
+      // Skip if effect is not active
+      if (!effect.applied) return;
+      
+      // Process effect based on type
+      switch (effectName) {
+        case 'Paralysis':
+          // 25% chance to skip turn
+          if (Math.random() < 0.25) {
+            pokemon.skipTurn = true;
+            
+            // Emit event
+            battleEvents.emit(
+              BATTLE_EVENTS.STATUS_EFFECT_TRIGGERED,
+              createEventData(BATTLE_EVENTS.STATUS_EFFECT_TRIGGERED, {
+                pokemon,
+                statusEffect: effectName,
+                effect: 'Skip Turn'
+              })
+            );
+          }
+          break;
+          
+        // Add more status effects as needed
+      }
+      
+      // Reduce duration
+      effect.duration--;
+      
+      // Remove effect if duration is over
+      if (effect.duration <= 0) {
+        delete pokemon.statusEffects[effectName];
+        
+        // Emit status effect removed event
+        battleEvents.emit(
+          BATTLE_EVENTS.STATUS_EFFECT_REMOVED,
+          createEventData(BATTLE_EVENTS.STATUS_EFFECT_REMOVED, {
+            pokemon,
+            statusEffect: effectName
+          })
+        );
       }
     });
-  }
+  });
   
-  const attackRatio = attackStat / defenseStat;
-  const baseDamage = (levelDamage * move.power * attackRatio) / 50 + 2;
-  const randomFactor = (Math.random() * 15 + 85) / 100;
-  const finalDamage = baseDamage * randomFactor * stabModifier * typeModifier;
-  
-  const damageResult = {
-    damage: Math.max(1, Math.round(finalDamage)),
-    stabModifier,
-    typeModifier
-  };
-  
-  // Emit damage calculated event
-  battleEvents.emit(
-    BATTLE_EVENTS.DAMAGE_CALCULATED,
-    createEventData(BATTLE_EVENTS.DAMAGE_CALCULATED, {
-      attacker,
-      defender,
-      move,
-      ...damageResult
-    })
-  );
-  
-  return damageResult;
-}
-
-/**
- * Apply damage to a Pokémon
- */
-export function applyDamage(pokemon, amount) {
-  const newPokemon = { ...pokemon };
-  newPokemon.hp = Math.max(0, newPokemon.hp - amount);
-  
-  // Emit damage applied event
-  battleEvents.emit(
-    BATTLE_EVENTS.DAMAGE_APPLIED,
-    createEventData(BATTLE_EVENTS.DAMAGE_APPLIED, {
-      pokemon: newPokemon,
-      damageAmount: amount,
-      remainingHp: newPokemon.hp,
-      maxHp: newPokemon.maxHp
-    })
-  );
-  
-  return newPokemon;
+  return newState;
 }
 
 /**
@@ -119,6 +106,23 @@ export function executeAttack(state, attackerId, defenderId, moveKey) {
   const newState = JSON.parse(JSON.stringify(state));
   const attacker = newState[attackerId];
   const defender = newState[defenderId];
+  
+  // Check if attacker is set to skip turn due to status effect
+  if (attacker.skipTurn) {
+    // Reset skip turn flag
+    attacker.skipTurn = false;
+    
+    battleEvents.emit(
+      BATTLE_EVENTS.MOVE_USED,
+      createEventData(BATTLE_EVENTS.MOVE_USED, {
+        pokemon: attacker,
+        failed: true,
+        reason: 'status-effect'
+      })
+    );
+    
+    return newState;
+  }
   
   // Check if attacker is already fainted
   if (attacker.hp <= 0) {
@@ -177,11 +181,27 @@ export function executeAttack(state, attackerId, defenderId, moveKey) {
     })
   );
   
-  // Calculate damage
-  const damageResult = calculateDamage({ attacker, defender, move });
+  // Execute the move's custom code
+  const result = move.execute({
+    attacker,
+    defender,
+    move,
+    battleState: newState,
+    moveList  // Pass the move list for metronome
+  });
   
-  // Apply damage
-  newState[defenderId] = applyDamage(defender, damageResult.damage);
+  // Update the state with the result
+  if (result) {
+    // Update defender if the result includes defender
+    if (result.defender) {
+      newState[defenderId] = result.defender;
+    }
+    
+    // Update attacker if the result includes attacker
+    if (result.attacker) {
+      newState[attackerId] = result.attacker;
+    }
+  }
   
   // Check if defender fainted
   let battleOver = newState.battleOver;
@@ -226,6 +246,9 @@ export function executeTurn(state, pokemon1MoveKey, pokemon2MoveKey) {
   if (newState.battleOver) {
     return newState;
   }
+  
+  // Process status effects at the beginning of the turn
+  newState = processStatusEffects(newState);
   
   // Emit turn started event
   battleEvents.emit(

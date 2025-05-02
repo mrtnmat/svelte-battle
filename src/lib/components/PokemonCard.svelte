@@ -1,4 +1,6 @@
 <script>
+  import PokemonStatus from './PokemonStatus.svelte';
+
   // Props for the component
   let {
     pokemon,
@@ -53,6 +55,9 @@
       </span>
     {/each}
   </div>
+  
+  <!-- Show status effects if any -->
+  <PokemonStatus pokemon={pokemon} />
 
   <div class="w-full bg-gray-200 h-2 mt-1 rounded-full">
     <div

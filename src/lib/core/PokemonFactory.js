@@ -53,6 +53,187 @@ const pokemonBaseStats = {
     specialDefense: 55,
     speed: 90,
     types: ["Psychic"]
+  },
+  // Added more species for variety
+  Jigglypuff: {
+    hp: 115,
+    attack: 45,
+    defense: 20,
+    specialAttack: 45,
+    specialDefense: 25,
+    speed: 20,
+    types: ["Normal"]
+  },
+  Diglett: {
+    hp: 10,
+    attack: 55,
+    defense: 25,
+    specialAttack: 35,
+    specialDefense: 45,
+    speed: 95,
+    types: ["Ground"]
+  },
+  Geodude: {
+    hp: 40,
+    attack: 80,
+    defense: 100,
+    specialAttack: 30,
+    specialDefense: 30,
+    speed: 20,
+    types: ["Rock", "Ground"]
+  },
+  Gastly: {
+    hp: 30,
+    attack: 35,
+    defense: 30,
+    specialAttack: 100,
+    specialDefense: 35,
+    speed: 80,
+    types: ["Ghost", "Poison"]
+  },
+  Onix: {
+    hp: 35,
+    attack: 45,
+    defense: 160,
+    specialAttack: 30,
+    specialDefense: 45,
+    speed: 70,
+    types: ["Rock", "Ground"]
+  },
+  Voltorb: {
+    hp: 40,
+    attack: 30,
+    defense: 50,
+    specialAttack: 55,
+    specialDefense: 55,
+    speed: 100,
+    types: ["Electric"]
+  },
+  Exeggcute: {
+    hp: 60,
+    attack: 40,
+    defense: 80,
+    specialAttack: 60,
+    specialDefense: 45,
+    speed: 40,
+    types: ["Grass", "Psychic"]
+  },
+  Cubone: {
+    hp: 50,
+    attack: 50,
+    defense: 95,
+    specialAttack: 40,
+    specialDefense: 50,
+    speed: 35,
+    types: ["Ground"]
+  },
+  Koffing: {
+    hp: 40,
+    attack: 65,
+    defense: 95,
+    specialAttack: 60,
+    specialDefense: 45,
+    speed: 35,
+    types: ["Poison"]
+  },
+  Rhyhorn: {
+    hp: 80,
+    attack: 85,
+    defense: 95,
+    specialAttack: 30,
+    specialDefense: 30,
+    speed: 25,
+    types: ["Ground", "Rock"]
+  },
+  Chansey: {
+    hp: 250,
+    attack: 5,
+    defense: 5,
+    specialAttack: 35,
+    specialDefense: 105,
+    speed: 50,
+    types: ["Normal"]
+  },
+  Staryu: {
+    hp: 30,
+    attack: 45,
+    defense: 55,
+    specialAttack: 70,
+    specialDefense: 55,
+    speed: 85,
+    types: ["Water"]
+  },
+  Scyther: {
+    hp: 70,
+    attack: 110,
+    defense: 80,
+    specialAttack: 55,
+    specialDefense: 80,
+    speed: 105,
+    types: ["Bug", "Flying"]
+  },
+  Magmar: {
+    hp: 65,
+    attack: 95,
+    defense: 57,
+    specialAttack: 100,
+    specialDefense: 85,
+    speed: 93,
+    types: ["Fire"]
+  },
+  Pinsir: {
+    hp: 65,
+    attack: 125,
+    defense: 100,
+    specialAttack: 55,
+    specialDefense: 70,
+    speed: 85,
+    types: ["Bug"]
+  },
+  Tauros: {
+    hp: 75,
+    attack: 100,
+    defense: 95,
+    specialAttack: 40,
+    specialDefense: 70,
+    speed: 110,
+    types: ["Normal"]
+  },
+  Magikarp: {
+    hp: 20,
+    attack: 10,
+    defense: 55,
+    specialAttack: 15,
+    specialDefense: 20,
+    speed: 80,
+    types: ["Water"]
+  },
+  Eevee: {
+    hp: 55,
+    attack: 55,
+    defense: 50,
+    specialAttack: 45,
+    specialDefense: 65,
+    speed: 55,
+    types: ["Normal"]
+  },
+  Porygon: {
+    hp: 65,
+    attack: 60,
+    defense: 70,
+    specialAttack: 85,
+    specialDefense: 75,
+    speed: 40,
+    types: ["Normal"]
+  },
+  Dratini: {
+    hp: 41,
+    attack: 64,
+    defense: 45,
+    specialAttack: 50,
+    specialDefense: 50,
+    speed: 50,
+    types: ["Dragon"]
   }
 };
 
@@ -75,11 +256,11 @@ function calculateStat(baseStat, level, isHP = false) {
 export function createPokemon(species, level, options = {}) {
   // Get base stats for the species
   const baseStats = pokemonBaseStats[species];
-  
+
   if (!baseStats) {
     throw new Error(`Unknown Pokémon species: ${species}`);
   }
-  
+
   // Calculate stats based on level
   const hp = calculateStat(baseStats.hp, level, true);
   const attack = calculateStat(baseStats.attack, level);
@@ -87,27 +268,27 @@ export function createPokemon(species, level, options = {}) {
   const specialAttack = calculateStat(baseStats.specialAttack, level);
   const specialDefense = calculateStat(baseStats.specialDefense, level);
   const speed = calculateStat(baseStats.speed, level);
-  
+
   // Determine which moves to include
   const moveKeys = options.moveKeys;
-  
+
   // Use provided moves, or get level-appropriate moves if none provided
   const moveNames = moveKeys || getBestMoves(species, level);
-  
+
   // Create moves object with PP
   const moves = {};
   moveNames.forEach((moveName, index) => {
     const moveKey = `Move ${index + 1}`;
     const move = moveList[moveName];
-    
+
     if (!move) {
       console.warn(`Unknown move: ${moveName} for ${species}`);
       return;
     }
-    
+
     moves[moveKey] = createMoveInstance(move);
   });
-  
+
   // Return the new Pokémon object
   return {
     name: species,
@@ -134,7 +315,7 @@ export function createStarters(level = 5) {
     Bulbasaur: createPokemon("Bulbasaur", level),
     Charmander: createPokemon("Charmander", level),
     Squirtle: createPokemon("Squirtle", level),
-    Abra: createPokemon("Abra", level)
+    Eevee: createPokemon("Eevee", level)
   };
 }
 
@@ -163,14 +344,14 @@ export function cureStatusEffects(pokemon) {
  */
 export function restorePP(pokemon) {
   const updatedMoves = {};
-  
+
   for (const [key, move] of Object.entries(pokemon.moves)) {
     updatedMoves[key] = {
       ...move,
       ppRemaining: move.pp
     };
   }
-  
+
   return {
     ...pokemon,
     moves: updatedMoves
@@ -182,15 +363,15 @@ export function restorePP(pokemon) {
  */
 export function levelUp(pokemon, levels = 1) {
   const newLevel = pokemon.level + levels;
-  
+
   // Get base stats for this species
   const species = pokemon.name;
   const baseStats = pokemonBaseStats[species];
-  
+
   if (!baseStats) {
     throw new Error(`Unknown Pokémon species: ${species}`);
   }
-  
+
   // Calculate new stats
   const newHp = calculateStat(baseStats.hp, newLevel, true);
   const newAttack = calculateStat(baseStats.attack, newLevel);
@@ -198,18 +379,18 @@ export function levelUp(pokemon, levels = 1) {
   const newSpecialAttack = calculateStat(baseStats.specialAttack, newLevel);
   const newSpecialDefense = calculateStat(baseStats.specialDefense, newLevel);
   const newSpeed = calculateStat(baseStats.speed, newLevel);
-  
+
   // Get new moves for the level
   const currentMoveNames = Object.values(pokemon.moves).map(move => move.name);
   const availableMoveNames = getBestMoves(species, newLevel);
-  
+
   // Keep track of new moves learned
   const newMovesLearned = availableMoveNames.filter(move => !currentMoveNames.includes(move));
-  
+
   // Create updated moves object
   const updatedMoves = {};
   let moveCount = 0;
-  
+
   // First add existing moves
   for (const [key, move] of Object.entries(pokemon.moves)) {
     if (moveCount < 4) {
@@ -217,7 +398,7 @@ export function levelUp(pokemon, levels = 1) {
       moveCount++;
     }
   }
-  
+
   // Then add new moves, replacing oldest if needed
   for (const moveName of newMovesLearned) {
     if (moveCount < 4) {
@@ -232,7 +413,7 @@ export function levelUp(pokemon, levels = 1) {
       updatedMoves['Move 4'] = createMoveInstance(moveList[moveName]);
     }
   }
-  
+
   // Return upgraded Pokémon
   return {
     ...pokemon,

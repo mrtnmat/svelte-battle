@@ -38,8 +38,16 @@ export function cleanupEventListeners() {
 function setupEventListeners() {
   // Battle started
   const unsubBattleStart = battleEvents.on(BATTLE_EVENTS.BATTLE_STARTED, (event) => {
-    addLogMessage(`Battle started between ${event.pokemon1.name} and ${event.pokemon2.name}!`);
-    addLogMessage(`Select moves for both Pokémon.`);
+    // Support both naming conventions (pokemon1/pokemon2 and playerPokemon/enemyPokemon)
+    const pokemon1 = event.pokemon1 || event.playerPokemon;
+    const pokemon2 = event.pokemon2 || event.enemyPokemon;
+
+    if (pokemon1 && pokemon2) {
+      addLogMessage(`Battle started between ${pokemon1.name} and ${pokemon2.name}!`);
+      addLogMessage(`Select moves for both Pokémon.`);
+    } else {
+      addLogMessage(`Battle started!`);
+    }
   });
   unsubscribeFunctions.push(unsubBattleStart);
 
@@ -101,14 +109,14 @@ function setupEventListeners() {
   const unsubDamageCalc = battleEvents.on(BATTLE_EVENTS.DAMAGE_CALCULATED, (event) => {
     // Log move details
     addLogMessage(`${event.move.name} is a ${event.move.type}-type ${event.move.category} move!`);
-    
+
     // Log stat usage
     if (event.move.category === 'Physical') {
       addLogMessage(`Used ${event.attacker.name}'s Attack (${event.attacker.attack}) against ${event.defender.name}'s Defense (${event.defender.defense})!`);
     } else if (event.move.category === 'Special') {
       addLogMessage(`Used ${event.attacker.name}'s Special Attack (${event.attacker.specialAttack}) against ${event.defender.name}'s Special Defense (${event.defender.specialDefense})!`);
     }
-    
+
     // Log STAB bonus
     if (event.stabModifier > 1) {
       addLogMessage(`It's ${event.attacker.name}'s same type! Attack power increased by 50%!`);
@@ -197,7 +205,7 @@ function setupEventListeners() {
       'speed': 'Speed'
     };
     const displayName = statDisplayNames[event.stat] || event.stat;
-    
+
     addLogMessage(`${event.pokemon.name}'s ${displayName} rose!`);
   });
   unsubscribeFunctions.push(unsubStatBoosted);
@@ -213,7 +221,7 @@ function setupEventListeners() {
       'speed': 'Speed'
     };
     const displayName = statDisplayNames[event.stat] || event.stat;
-    
+
     addLogMessage(`${event.pokemon.name}'s ${displayName} fell!`);
   });
   unsubscribeFunctions.push(unsubStatLowered);

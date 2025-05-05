@@ -4,6 +4,7 @@
   import BattleScene from './lib/scenes/BattleScene.svelte';
   import GauntletScene from './lib/scenes/GauntletScene.svelte';
   import MoveConstructor from './lib/scenes/MoveConstructor.svelte';
+  import TrainerGauntletScene from './lib/scenes/TrainerGauntletScene.svelte';
   
   // Use $derived to track the current scene
   let currentScene = $derived(sceneState.currentScene);
@@ -18,6 +19,8 @@
     <GauntletScene />
   {:else if currentScene === SCENES.MOVE_CONSTRUCTOR}
     <MoveConstructor />
+  {:else if currentScene === SCENES.TRAINER_GAUNTLET}
+    <TrainerGauntletScene />
   {/if}
 </main>
 

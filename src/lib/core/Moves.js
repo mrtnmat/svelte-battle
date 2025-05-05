@@ -2,6 +2,7 @@
  * Move system for Pokémon battles
  * 
  * This module contains move definitions and creation functions.
+ * Modified to use the stat stage system.
  */
 
 import * as MoveEffects from './MoveEffects.js';
@@ -25,7 +26,7 @@ function createMove({
   statusEffect = null,
   statusDuration = 3,
   statToBoost = null,
-  boostAmount = 1,
+  stageChange = 1, // Changed from boostAmount to stageChange for clarity
   healPercent = 0,
   // Any other custom properties
   ...otherProps
@@ -44,7 +45,7 @@ function createMove({
     statusEffect,
     statusDuration,
     statToBoost,
-    boostAmount,
+    stageChange,
     healPercent,
     ...otherProps
   };
@@ -164,7 +165,10 @@ export const moveList = {
     category: 'Special',
     type: 'Water',
     description: 'A spray of bubbles is forcefully ejected at the target. This may also lower the target\'s Speed stat.',
-    execute: MoveEffects.standardAttack
+    execute: MoveEffects.secondaryEffectAttack,
+    secondaryEffectChance: 10,
+    stat: 'speed',
+    stageChange: 1
   }),
 
   // Special case moves with custom effects
@@ -187,7 +191,7 @@ export const moveList = {
     type: 'Normal',
     description: 'The user growls in an endearing way, making opposing Pokémon less wary. This lowers their Attack stats.',
     stat: 'attack',
-    reduction: 0.75, // Reduce to 75% of current value
+    stageChange: 1, // Lower by 1 stage
     execute: MoveEffects.statLowerTarget
   }),
 
@@ -199,7 +203,7 @@ export const moveList = {
     type: 'Normal',
     description: 'The user\'s body grows all at once. This raises the Attack and Sp. Atk stats.',
     statToBoost: 'specialAttack',
-    boostAmount: 1,
+    stageChange: 1, // Raise by 1 stage
     execute: MoveEffects.statBoostSelf
   }),
 
@@ -258,7 +262,7 @@ export const moveList = {
     type: 'Water',
     description: 'The user withdraws into its shell, raising its Defense stat.',
     statToBoost: 'defense',
-    boostAmount: 1,
+    stageChange: 1, // Raise by 1 stage
     execute: MoveEffects.statBoostSelf
   }),
 
@@ -324,16 +328,22 @@ export const moveList = {
     type: 'Normal',
     description: 'A frenetic dance to uplift the fighting spirit. Sharply raises the user\'s Attack stat.',
     firstEffect: (params) => {
-      // Boost attack by 2 stages (double)
+      // Boost attack by 2 stages
       const result = { ...params };
-      result.statToBoost = 'attack';
-      result.boostAmount = 2;
+      result.move = {
+        ...result.move,
+        statToBoost: 'attack',
+        stageChange: 2
+      };
       return MoveEffects.statBoostSelf(result);
     },
     secondEffect: (params) => {
       // Small self-healing
       const result = { ...params };
-      result.healPercent = 10;
+      result.move = {
+        ...result.move,
+        healPercent: 10
+      };
       return MoveEffects.healingMove(result);
     },
     execute: MoveEffects.comboMove
@@ -360,7 +370,7 @@ export const moveList = {
     type: 'Normal',
     description: 'The user wags its tail cutely, making opposing Pokémon less wary and lowering their Defense stat.',
     stat: 'defense',
-    reduction: 0.75,
+    stageChange: 1, // Lower by 1 stage
     execute: MoveEffects.statLowerTarget
   }),
 
@@ -372,7 +382,7 @@ export const moveList = {
     type: 'Normal',
     description: 'The user gives opposing Pokémon an intimidating leer that lowers the Defense stat.',
     stat: 'defense',
-    reduction: 0.75,
+    stageChange: 1, // Lower by 1 stage
     execute: MoveEffects.statLowerTarget
   }),
 
@@ -384,7 +394,154 @@ export const moveList = {
     type: 'Bug',
     description: 'The user binds the target with silk blown from its mouth. This lowers the target\'s Speed stat.',
     stat: 'speed',
-    reduction: 0.66, // Reduce by a larger amount (to 66% of current)
+    stageChange: 2, // Lower by 2 stages
     execute: MoveEffects.statLowerTarget
+  }),
+
+  // New moves that use stat stages more explicitly
+  'Howl': createMove({
+    name: 'Howl',
+    power: 0,
+    pp: 40,
+    category: 'Status',
+    type: 'Normal',
+    description: 'The user howls loudly to raise its spirit, which raises its Attack stat.',
+    statToBoost: 'attack',
+    stageChange: 1,
+    execute: MoveEffects.statBoostSelf
+  }),
+
+  'Meditate': createMove({
+    name: 'Meditate',
+    power: 0,
+    pp: 40,
+    category: 'Status',
+    type: 'Psychic',
+    description: 'The user meditates to awaken the power deep within its body and raise its Attack stat.',
+    statToBoost: 'attack',
+    stageChange: 1,
+    execute: MoveEffects.statBoostSelf
+  }),
+
+  'Defense Curl': createMove({
+    name: 'Defense Curl',
+    power: 0,
+    pp: 40,
+    category: 'Status',
+    type: 'Normal',
+    description: 'The user curls up to conceal weak spots and raise its Defense stat.',
+    statToBoost: 'defense',
+    stageChange: 1,
+    execute: MoveEffects.statBoostSelf
+  }),
+
+  'Harden': createMove({
+    name: 'Harden',
+    power: 0,
+    pp: 30,
+    category: 'Status',
+    type: 'Normal',
+    description: 'The user stiffens all the muscles in its body to raise its Defense stat.',
+    statToBoost: 'defense',
+    stageChange: 1,
+    execute: MoveEffects.statBoostSelf
+  }),
+
+  // Stronger stat modifier moves (2 stages)
+  'Cosmic Power': createMove({
+    name: 'Cosmic Power',
+    power: 0,
+    pp: 20,
+    category: 'Status',
+    type: 'Psychic',
+    description: 'The user absorbs a mystical power from space to raise its Defense and Sp. Def stats.',
+    firstEffect: (params) => {
+      // Boost defense by 1 stage
+      const result = { ...params };
+      result.move = {
+        ...result.move,
+        statToBoost: 'defense',
+        stageChange: 1
+      };
+      return MoveEffects.statBoostSelf(result);
+    },
+    secondEffect: (params) => {
+      // Boost special defense by 1 stage
+      const result = { ...params };
+      result.move = {
+        ...result.move,
+        statToBoost: 'specialDefense',
+        stageChange: 1
+      };
+      return MoveEffects.statBoostSelf(result);
+    },
+    execute: MoveEffects.comboMove
+  }),
+
+  'Nasty Plot': createMove({
+    name: 'Nasty Plot',
+    power: 0,
+    pp: 20,
+    category: 'Status',
+    type: 'Dark',
+    description: 'The user stimulates its brain by thinking bad thoughts. This sharply raises the user\'s Sp. Atk stat.',
+    statToBoost: 'specialAttack',
+    stageChange: 2, // Raise by 2 stages (sharply)
+    execute: MoveEffects.statBoostSelf
+  }),
+
+  'Dragon Dance': createMove({
+    name: 'Dragon Dance',
+    power: 0,
+    pp: 20,
+    category: 'Status',
+    type: 'Dragon',
+    description: 'The user vigorously performs a mystic, powerful dance that raises its Attack and Speed stats.',
+    firstEffect: (params) => {
+      // Boost attack by 1 stage
+      const result = { ...params };
+      result.move = {
+        ...result.move,
+        statToBoost: 'attack',
+        stageChange: 1
+      };
+      return MoveEffects.statBoostSelf(result);
+    },
+    secondEffect: (params) => {
+      // Boost speed by 1 stage
+      const result = { ...params };
+      result.move = {
+        ...result.move,
+        statToBoost: 'speed',
+        stageChange: 1
+      };
+      return MoveEffects.statBoostSelf(result);
+    },
+    execute: MoveEffects.comboMove
+  }),
+
+  // Accuracy/Evasion modifiers
+  'Sand Attack': createMove({
+    name: 'Sand Attack',
+    power: 0,
+    pp: 15,
+    category: 'Status',
+    type: 'Ground',
+    description: 'Sand is hurled in the target\'s face, reducing its accuracy.',
+    stat: 'accuracy',
+    stageChange: 1, // Lower accuracy by 1 stage
+    execute: MoveEffects.statLowerTarget
+  }),
+
+  'Double Team': createMove({
+    name: 'Double Team',
+    power: 0,
+    pp: 15,
+    category: 'Status',
+    type: 'Normal',
+    description: 'By moving rapidly, the user makes illusory copies of itself to raise its evasiveness.',
+    statToBoost: 'evasion',
+    stageChange: 1, // Raise evasion by 1 stage
+    execute: MoveEffects.statBoostSelf
   })
 }

@@ -2,6 +2,7 @@
  * Battle Log Manager
  * 
  * This service listens to battle events and generates appropriate log messages.
+ * Updated to handle stat stage messages.
  */
 
 import { writable } from 'svelte/store';
@@ -112,9 +113,9 @@ function setupEventListeners() {
 
     // Log stat usage
     if (event.move.category === 'Physical') {
-      addLogMessage(`Used ${event.attacker.name}'s Attack (${event.attacker.attack}) against ${event.defender.name}'s Defense (${event.defender.defense})!`);
+      addLogMessage(`Used ${event.attacker.name}'s Attack against ${event.defender.name}'s Defense!`);
     } else if (event.move.category === 'Special') {
-      addLogMessage(`Used ${event.attacker.name}'s Special Attack (${event.attacker.specialAttack}) against ${event.defender.name}'s Special Defense (${event.defender.specialDefense})!`);
+      addLogMessage(`Used ${event.attacker.name}'s Special Attack against ${event.defender.name}'s Special Defense!`);
     }
 
     // Log STAB bonus
@@ -194,35 +195,69 @@ function setupEventListeners() {
   });
   unsubscribeFunctions.push(unsubStatusTriggered);
 
-  // Stat boosted
+  // Stat boosted - Updated for stat stages
   const unsubStatBoosted = battleEvents.on(BATTLE_EVENTS.STAT_BOOSTED, (event) => {
-    // Convert stat name to display name
-    const statDisplayNames = {
-      'attack': 'Attack',
-      'defense': 'Defense',
-      'specialAttack': 'Special Attack',
-      'specialDefense': 'Special Defense',
-      'speed': 'Speed'
-    };
-    const displayName = statDisplayNames[event.stat] || event.stat;
+    // If there's a custom message from the stat stage system, use it
+    if (event.message) {
+      addLogMessage(event.message);
+    } else {
+      // Convert stat name to display name
+      const statDisplayNames = {
+        'attack': 'Attack',
+        'defense': 'Defense',
+        'specialAttack': 'Special Attack',
+        'specialDefense': 'Special Defense',
+        'speed': 'Speed',
+        'accuracy': 'Accuracy',
+        'evasion': 'Evasion'
+      };
+      const displayName = statDisplayNames[event.stat] || event.stat;
 
-    addLogMessage(`${event.pokemon.name}'s ${displayName} rose!`);
+      // Create a message based on the stage change
+      const absChange = Math.abs(event.stageChange || 1);
+      let changeText = '';
+
+      if (absChange >= 3) {
+        changeText = 'drastically';
+      } else if (absChange === 2) {
+        changeText = 'sharply';
+      }
+
+      addLogMessage(`${event.pokemon.name}'s ${displayName} ${changeText} rose!`);
+    }
   });
   unsubscribeFunctions.push(unsubStatBoosted);
 
-  // Stat lowered
+  // Stat lowered - Updated for stat stages
   const unsubStatLowered = battleEvents.on(BATTLE_EVENTS.STAT_LOWERED, (event) => {
-    // Convert stat name to display name
-    const statDisplayNames = {
-      'attack': 'Attack',
-      'defense': 'Defense',
-      'specialAttack': 'Special Attack',
-      'specialDefense': 'Special Defense',
-      'speed': 'Speed'
-    };
-    const displayName = statDisplayNames[event.stat] || event.stat;
+    // If there's a custom message from the stat stage system, use it
+    if (event.message) {
+      addLogMessage(event.message);
+    } else {
+      // Convert stat name to display name
+      const statDisplayNames = {
+        'attack': 'Attack',
+        'defense': 'Defense',
+        'specialAttack': 'Special Attack',
+        'specialDefense': 'Special Defense',
+        'speed': 'Speed',
+        'accuracy': 'Accuracy',
+        'evasion': 'Evasion'
+      };
+      const displayName = statDisplayNames[event.stat] || event.stat;
 
-    addLogMessage(`${event.pokemon.name}'s ${displayName} fell!`);
+      // Create a message based on the stage change
+      const absChange = Math.abs(event.stageChange || 1);
+      let changeText = '';
+
+      if (absChange >= 3) {
+        changeText = 'severely';
+      } else if (absChange === 2) {
+        changeText = 'harshly';
+      }
+
+      addLogMessage(`${event.pokemon.name}'s ${displayName} ${changeText} fell!`);
+    }
   });
   unsubscribeFunctions.push(unsubStatLowered);
 

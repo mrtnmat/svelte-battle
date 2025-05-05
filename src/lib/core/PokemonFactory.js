@@ -6,6 +6,7 @@
 
 import { moveList, createMoveInstance } from './Moves.js';
 import { getBestMoves } from './Movesets.js';
+import { initializeStatStages, resetStatStages } from './StatStageSystem.js';
 
 // Base stats for each Pokémon species
 const pokemonBaseStats = {
@@ -252,6 +253,7 @@ function calculateStat(baseStat, level, isHP = false) {
 
 /**
  * Create a new Pokémon with the given species and level
+ * Modified to initialize stat stages
  */
 export function createPokemon(species, level, options = {}) {
   // Get base stats for the species
@@ -289,7 +291,10 @@ export function createPokemon(species, level, options = {}) {
     moves[moveKey] = createMoveInstance(move);
   });
 
-  // Return the new Pokémon object
+  // Initialize stat stages
+  const statStages = initializeStatStages();
+
+  // Return the new Pokémon object with stat stages
   return {
     name: species,
     level,
@@ -303,6 +308,7 @@ export function createPokemon(species, level, options = {}) {
     moves,
     types: baseStats.types,
     statusEffects: {},  // Initialize with empty status effects
+    statStages,         // Add stat stages
   };
 }
 
@@ -330,13 +336,22 @@ export function healPokemon(pokemon) {
 }
 
 /**
- * Clear all status effects from a Pokémon
+ * Clear all status effects and stat stages from a Pokémon
+ * Modified to also clear stat stages
  */
 export function cureStatusEffects(pokemon) {
   return {
     ...pokemon,
-    statusEffects: {}
+    statusEffects: {},
+    statStages: initializeStatStages() // Reset stat stages
   };
+}
+
+/**
+ * Reset all stat stages for a Pokémon
+ */
+export function resetPokemonStatStages(pokemon) {
+  return resetStatStages(pokemon);
 }
 
 /**
